@@ -1,9 +1,12 @@
 import numpy as np
+import base64
 import os
-# import struct
 
 
 def imput(ask="Num: "):
+    """""""""""""""
+    Input but only accepts whole numbers.
+    """""""""
     while True:
         try: return int(input(ask))
         except ValueError: print("Not number!")
@@ -11,45 +14,52 @@ def imput(ask="Num: "):
 
 def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     """""""""""""""
-    creates a file that has been encoded, from a list
+    Creates a file that has been encoded, from a list.
     """""""""
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
-    r = np.random.RandomState(int(save_num * np.pi * 719))
-    for x in range(len(save_file)):
-        line_bytes = bytearray(save_file[x], encoding="windows-1250")
-        line_bytes_enc = bytearray("", encoding="windows-1250")
+    r = np.random.RandomState(int(save_num * np.pi * 3853))
+    encode_64 = r.randint(3, 10)
+    for line in save_file:
+        line_enc = str(line).encode("windows-1250")
+        for _ in range(encode_64):
+            line_enc = base64.b64encode(line_enc)
+        line_enc = line_enc.decode("windows-1250")
+        line_bytes = bytearray(line_enc, "utf-8")
+        line_bytes_enc = bytearray("", "utf-8")
         for byte in line_bytes:
-            line_bytes_enc.append((byte + r.randint(1, 255)) % 256)
-        f.write(line_bytes_enc)
-        if x != len(save_file) - 1:
-            f.write(bytearray("\n", encoding="windows-1250"))
-    f.close()
+            line_bytes_enc.append(byte + r.randint(1, 134))
+        line_bytes_enc.append(10)
+        f.write(bytes(line_bytes_enc))
+    f.close
 
 
 def decode_save(save_num=1, save_name="save*", save_ext="sav"):
     """""""""""""""
-    returns a list of strings, decoded fron the encoded file
+    Returns a list of strings, decoded fron the encoded file.
     """""""""
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
     lines = f.readlines()
-    f.close()
-    r = np.random.RandomState(int(save_num * np.pi * 719))
+    f.close
     lis = []
-    for line_bytes_enc in lines:
-        line_bytes = bytearray("", encoding="windows-1250")
-        # print("\n\n" + str(line_bytes_enc))
-        for byte in line_bytes_enc:
-            # print(byte, end=", ")
+    r = np.random.RandomState(int(save_num * np.pi * 3853))
+    encode_64 = r.randint(3, 10)
+    for bytes_enc in lines:
+        line_bytes = bytearray("", "utf-8")
+        for byte in bytes_enc:
             if byte != 10:
-                line_bytes.append((byte - r.randint(1, 255)) % 256)
-        line = line_bytes.decode("windows-1250")
+                line_bytes.append(byte - r.randint(1, 134))
+        line_enc = line_bytes.decode("utf-8")
+        line_enc = line_enc.encode("windows-1250")
+        for _ in range(encode_64):
+            line_enc = base64.b64decode(line_enc)
+        line = line_enc.decode("windows-1250")
         lis.append(line)
     return lis
 
 
-def file_reader(max_saves=5, write_out=True, save_name="save*", save_ext="sav"):
+def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav"):
     """""""""""""""
-    returns encripted data from all save files with the save file number
+    Returns encripted data from all save files with the save file number.
     """""""""
     file_data = []
     file_num = 0
@@ -63,7 +73,7 @@ def file_reader(max_saves=5, write_out=True, save_name="save*", save_ext="sav"):
         except FileNotFoundError:
             pass
         else:
-            data = decode_save(file_num, "save*", "sav")
+            data = decode_save(file_num, save_name, save_ext)
             file_data.append([file_num, data])
             if write_out:
                 print(f"Save File {file_num}:")
@@ -72,13 +82,13 @@ def file_reader(max_saves=5, write_out=True, save_name="save*", save_ext="sav"):
     return file_data
 
 
-def manage_saves(file_data = [], max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     """""""""""""""
-    allows the user to pick between creating a new save, loading an old save and deleteing a save
-    returns the option the user selected:
-    [0, x] = load, into x slot
-    [1, x] = new file, into x slot
-    [-1] = deleted file
+    Allows the user to pick between creating a new save, loading an old save and deleteing a save.\n
+    Returns the option the user selected:\n
+    \t[0, x] = load, into x slot\n
+    \t[1, x] = new file, into x slot\n
+    \t[-1] = deleted file
     """""""""
     manage_exit = False
     while not manage_exit:
@@ -121,29 +131,26 @@ def manage_saves(file_data = [], max_saves=5, save_name="save*", save_ext="sav")
             return [1, 1]
     return [-1]
 
-def default_run(write_out=True, max_saves=5, save_name="save*", save_ext="sav"):
-    save = ["bro yes dude 42069", "éáőúűüó", "hello"]
-    save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá", "xd"]
-    encode_save(save, 1)
-    encode_save(save, 2)
-    encode_save(save, 4)
+
+def default_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True):
+    save = ["bro dude 42069", "áéűől4"]
+    save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
+    encode_save(save, 1, save_name, save_ext)
+    encode_save(save, 2, save_name, save_ext)
+    encode_save(save, 4, save_name, save_ext)
     options_status = True
     while options_status:
         datas = file_reader(max_saves, write_out, save_name, save_ext)
-        status = manage_saves(datas)
+        status = manage_saves(datas, max_saves, save_name, save_ext)
         if status[0] == 1 or status[0] == 0:
             options_status = False
     if status[0] == 1:
-        print(f"NEW GAME!!! in {status[1]}")
-        encode_save(save_new, status[1])
+        fff = input(f"NEW GAME!!! in {status[1]}")
+        encode_save(save_new, status[1], save_name, save_ext)
     elif status[0] == 0:
-        print(f"LOADING SAVE {status[1]}!!!")
+        fff = input(f"LOADING SAVE {status[1]}!!!")
 
-default_run()
 
-# some stuff can turn into \n = 10 = \xA0
+default_run(5, "save*", "sav", True)
 
-# test_line = ['0123456789ABCDEFNULSOHSTXETXEOTENQACKBELBSHTLFVTFFCRSOSIDLEDC1DC2DC3DC4NAKSYNETBCANEMSUBESCFSGSRSUS SP !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~DEL€	‚	„…†‡	‰Š‹ŚŤŽŹ	‘’“”•–—	™š›śťžźNBSPˇ˘Ł¤Ą¦§¨©Ş«¬SHY®Ż°±˛ł´µ¶·¸ąş»Ľ˝ľżŔÁÂĂÄĹĆÇČÉĘËĚÍÎĎĐŃŇÓÔŐÖ×ŘŮÚŰÜÝŢßŕáâăäĺćçčéęëěíîďđńňóôőö÷řůúűüýţ˙']
-# save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá", "xd"]
-# encode_save(save_new, 3)
-# print(decode_save(3))
+#test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
