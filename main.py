@@ -1,5 +1,4 @@
 import numpy as np
-import base64
 import os
 # import struct
 
@@ -14,31 +13,36 @@ def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     """""""""""""""
     creates a file that has been encoded, from a list
     """""""""
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "w")
-    r = np.random.RandomState(save_num)
-    for line in save_file:
-        line_enc = str(line).encode("windows-1250")
-        for _ in range(r.randint(3, 15)):
-            line_enc = base64.b64encode(line_enc)
-        line_enc = line_enc.decode("windows-1250")
-        f.write(line_enc + "\n")
-    f.close
+    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
+    r = np.random.RandomState(int(save_num * np.pi * 719))
+    for x in range(len(save_file)):
+        line_bytes = bytearray(save_file[x], encoding="windows-1250")
+        line_bytes_enc = bytearray("", encoding="windows-1250")
+        for byte in line_bytes:
+            line_bytes_enc.append((byte + r.randint(1, 255)) % 256)
+        f.write(line_bytes_enc)
+        if x != len(save_file) - 1:
+            f.write(bytearray("\n", encoding="windows-1250"))
+    f.close()
 
 
 def decode_save(save_num=1, save_name="save*", save_ext="sav"):
     """""""""""""""
     returns a list of strings, decoded fron the encoded file
     """""""""
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "r")
+    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
     lines = f.readlines()
-    f.close
-    r = np.random.RandomState(save_num)
+    f.close()
+    r = np.random.RandomState(int(save_num * np.pi * 719))
     lis = []
-    for line_enc in lines:
-        line_enc = line_enc.encode("windows-1250")
-        for _ in range(r.randint(3, 15)):
-            line_enc = base64.b64decode(line_enc)
-        line = line_enc.decode("windows-1250")
+    for line_bytes_enc in lines:
+        line_bytes = bytearray("", encoding="windows-1250")
+        # print("\n\n" + str(line_bytes_enc))
+        for byte in line_bytes_enc:
+            # print(byte, end=", ")
+            if byte != 10:
+                line_bytes.append((byte - r.randint(1, 255)) % 256)
+        line = line_bytes.decode("windows-1250")
         lis.append(line)
     return lis
 
@@ -118,14 +122,14 @@ def manage_saves(file_data = [], max_saves=5, save_name="save*", save_ext="sav")
     return [-1]
 
 def default_run(write_out=True, max_saves=5, save_name="save*", save_ext="sav"):
-    save = ["bro yes dude 42069", "áéűől4"]
-    save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
+    save = ["bro yes dude 42069", "éáőúűüó", "hello"]
+    save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá", "xd"]
     encode_save(save, 1)
     encode_save(save, 2)
     encode_save(save, 4)
     options_status = True
     while options_status:
-        datas = file_reader()
+        datas = file_reader(max_saves, write_out, save_name, save_ext)
         status = manage_saves(datas)
         if status[0] == 1 or status[0] == 0:
             options_status = False
@@ -137,14 +141,9 @@ def default_run(write_out=True, max_saves=5, save_name="save*", save_ext="sav"):
 
 default_run()
 
-"""""""""
-message_bytes = bytearray("ghghdj 42069", encoding="utf-8")
-f = open("test.txt", "wb")
-f.write(struct.pack('5B', *message_bytes))
-f.close()
-f = open("test.txt", "rb")
-line = f.readline()
-for li in line:
-    print(li)
-print(line)
-"""
+# some stuff can turn into \n = 10 = \xA0
+
+# test_line = ['0123456789ABCDEFNULSOHSTXETXEOTENQACKBELBSHTLFVTFFCRSOSIDLEDC1DC2DC3DC4NAKSYNETBCANEMSUBESCFSGSRSUS SP !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~DEL€	‚	„…†‡	‰Š‹ŚŤŽŹ	‘’“”•–—	™š›śťžźNBSPˇ˘Ł¤Ą¦§¨©Ş«¬SHY®Ż°±˛ł´µ¶·¸ąş»Ľ˝ľżŔÁÂĂÄĹĆÇČÉĘËĚÍÎĎĐŃŇÓÔŐÖ×ŘŮÚŰÜÝŢßŕáâăäĺćçčéęëěíîďđńňóôőö÷řůúűüýţ˙']
+# save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá", "xd"]
+# encode_save(save_new, 3)
+# print(decode_save(3))
