@@ -1,0 +1,1 @@
+This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support.

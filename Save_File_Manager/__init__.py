@@ -1,6 +1,8 @@
 """
 This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support
 """
+__version__ = 'dev'
+
 import numpy as np
 import base64
 import os
