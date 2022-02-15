@@ -1,5 +1,5 @@
 """
-This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support
+This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support.
 """
 __version__ = 'dev'
 
