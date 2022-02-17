@@ -11,4 +11,8 @@ setup(
     author_email='rohovszkyakoska@gmail.com',
 
     packages=find_packages(),
+    
+    install_requires=[
+        'numpy',
+    ],
 )
