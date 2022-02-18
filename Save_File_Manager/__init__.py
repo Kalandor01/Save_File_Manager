@@ -2,14 +2,15 @@
 This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = 'dev'
+__version__ = '1.4'
 
-import numpy as np
+import math
+from numpy import random as npr
 import base64
 import os
 
 
-def imput(ask="Num: "):
+def _imput(ask="Num: "):
     """
     Input but only accepts whole numbers.
     """
@@ -23,7 +24,7 @@ def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     Creates a file that has been encoded, from a list.
     """
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
-    r = np.random.RandomState(int(save_num * np.pi * 3853))
+    r = npr.RandomState(int(save_num * math.pi * 3853))
     encode_64 = r.randint(3, 10)
     for line in save_file:
         line_enc = str(line).encode("windows-1250")
@@ -47,7 +48,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
     lines = f.readlines()
     f.close()
     lis = []
-    r = np.random.RandomState(int(save_num * np.pi * 3853))
+    r = npr.RandomState(int(save_num * math.pi * 3853))
     encode_64 = r.randint(3, 10)
     for bytes_enc in lines:
         line_bytes = bytearray("", "utf-8")
@@ -102,7 +103,7 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     Returns the option the user selected:\n
     \t[0, x] = load, into x slot\n
     \t[1, x] = new file, into x slot\n
-    \t[-1] = deleted file
+    \t[-1, x] = deleted file in x slot
     """
     manage_exit = False
     while not manage_exit:
@@ -115,10 +116,10 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
                     file_num = data[0]
                 if data[0] < min_file_num:
                     min_file_num = data[0]
-            option = imput(f"Select an option: -1: delete mode, 0: new file, {min_file_num}-{file_num}: load file: ")
+            option = _imput(f"Select an option: -1: delete mode, 0: new file, {min_file_num}-{file_num}: load file: ")
             # delete
             if option == -1:
-                option = imput(f"Select an option: 0: back, {min_file_num}-{file_num}: delete file: ")
+                option = _imput(f"Select an option: 0: back, {min_file_num}-{file_num}: delete file: ")
                 if min_file_num <= option <= file_num:
                     sure = input(f"Are you sure you want to remove Save file {option}?(Y/N): ")
                     if sure.upper() == "Y":
@@ -143,11 +144,11 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
         else:
             fff = input(f"No save files!")
             return [1, 1]
-    return [-1]
+    return [-1, option]
 
 
-def default_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is_file_encoded=True):
-    save = ["bro dude 42069", "áéűől4"]
+def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is_file_encoded=True):
+    save = ["dude thing 42069", "áéűől4"]
     save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
     if is_file_encoded:
         encode_save(save, 1, save_name, save_ext)
@@ -185,6 +186,7 @@ def default_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, 
         fff = input(f"LOADING SAVE {status[1]}!!!")
 
 
-# default_run(5, "save*", "sav", True, False)
+# _test_run(5, "save*", "sav", True, False)
 
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
+# test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]

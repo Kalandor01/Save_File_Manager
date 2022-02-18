@@ -1,18 +1,19 @@
 from setuptools import setup, find_packages
 
-from Save_File_Manager import __version__
+from save_file_manager import __version__
 
 setup(
-    name='Save_File_Manager',
+    name='save_file_manager',
     version=__version__,
 
-    url='https://github.com/Kalandor01/Save_File_Manager',
+    url='https://github.com/Kalandor01/save_file_manager',
     author='Kalandor01',
     author_email='rohovszkyakoska@gmail.com',
 
     packages=find_packages(),
     
     install_requires=[
+        'base64',
         'numpy',
     ],
 )
