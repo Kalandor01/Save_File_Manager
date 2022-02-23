@@ -13,3 +13,6 @@ __pycache__/
 
 # Pip
 *.egg-info
+
+# test
+*.sav

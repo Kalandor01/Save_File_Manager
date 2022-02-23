@@ -2,12 +2,12 @@
 This module allows a basic (save) file creation, loading and deletion interface, with "secure" encoding support.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.4'
+__version__ = '1.4.1'
 
-import math
+from math import pi
 from numpy import random as npr
-import base64
-import os
+from base64 import b64encode, b64decode
+from os import remove
 
 
 def _imput(ask="Num: "):
@@ -24,12 +24,12 @@ def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     Creates a file that has been encoded, from a list.
     """
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
-    r = npr.RandomState(int(save_num * math.pi * 3853))
+    r = npr.RandomState(int(save_num * pi * 3853))
     encode_64 = r.randint(3, 10)
     for line in save_file:
         line_enc = str(line).encode("windows-1250")
         for _ in range(encode_64):
-            line_enc = base64.b64encode(line_enc)
+            line_enc = b64encode(line_enc)
         line_enc = line_enc.decode("windows-1250")
         line_bytes = bytearray(line_enc, "utf-8")
         line_bytes_enc = bytearray("", "utf-8")
@@ -48,7 +48,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
     lines = f.readlines()
     f.close()
     lis = []
-    r = npr.RandomState(int(save_num * math.pi * 3853))
+    r = npr.RandomState(int(save_num * pi * 3853))
     encode_64 = r.randint(3, 10)
     for bytes_enc in lines:
         line_bytes = bytearray("", "utf-8")
@@ -58,7 +58,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
         line_enc = line_bytes.decode("utf-8")
         line_enc = line_enc.encode("windows-1250")
         for _ in range(encode_64):
-            line_enc = base64.b64decode(line_enc)
+            line_enc = b64decode(line_enc)
         line = line_enc.decode("windows-1250")
         lis.append(line)
     return lis
@@ -123,7 +123,7 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
                 if min_file_num <= option <= file_num:
                     sure = input(f"Are you sure you want to remove Save file {option}?(Y/N): ")
                     if sure.upper() == "Y":
-                        os.remove(f'{save_name.replace("*", str(option))}.{save_ext}')
+                        remove(f'{save_name.replace("*", str(option))}.{save_ext}')
                         manage_exit = True
             # new file
             elif option == 0:
@@ -186,7 +186,6 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
         fff = input(f"LOADING SAVE {status[1]}!!!")
 
 
-# _test_run(5, "save*", "sav", True, False)
-
+# _test_run(5, "save*", "sav", True, True)
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
