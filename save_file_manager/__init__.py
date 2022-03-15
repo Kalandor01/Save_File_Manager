@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.5'
+__version__ = '1.5.1'
 
 from math import pi
 from numpy import random as npr
@@ -160,6 +160,10 @@ def list_ui(answers=["Yes", "No"], question=None, selected_icon=">", not_selecte
         input("\n\nmsvcrt MODULE NOT FOUND!\nTHIS MODULE IS WINDOWS ONLY!\n\n")
     
     selected = 0
+    while answers[selected] == None:
+        selected += 1
+        if selected > len(answers) - 1:
+            selected = 0
     action = -1    
     while action != 2:
         # render
