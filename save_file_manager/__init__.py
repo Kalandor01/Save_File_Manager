@@ -3,12 +3,9 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.6'
+__version__ = '1.6.1'
 
-from math import pi
 from numpy import random as npr
-from base64 import b64encode, b64decode
-from os import remove
 
 
 def _imput(ask="Num: "):
@@ -24,6 +21,9 @@ def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     """
     Creates a file that has been encoded, from a list.
     """
+    from math import pi
+    from base64 import b64encode
+
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     r = npr.RandomState(int(save_num * pi * 3853))
     encode_64 = r.randint(3, 10)
@@ -45,6 +45,9 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
     """
     Returns a list of strings, decoded fron the encoded file.
     """
+    from math import pi
+    from base64 import b64decode
+
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
     lines = f.readlines()
     f.close()
@@ -106,6 +109,8 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     \t[1, x] = new file, into x slot\n
     \t[-1, x] = deleted file in x slot
     """
+    from os import remove
+
     manage_exit = False
     while not manage_exit:
         if len(file_data):
@@ -335,6 +340,8 @@ def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"
     \t[0, x] = load, into x slot\n
     \t[1, x] = new file, into x slot\n
     """
+    from os import remove
+
     in_main_menu = True
     while True:
         if len(file_data):
