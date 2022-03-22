@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.5.1'
+__version__ = '1.6'
 
 from math import pi
 from numpy import random as npr
@@ -148,6 +148,123 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     return [-1, option]
 
 
+class Slider:
+    """
+    Object for the slider_ui method\n
+    Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
+    """
+    def __init__(self, section=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value=""):
+        if type(section) == range:
+            self.section = section
+        elif type(section) == int:
+            self.section = range(section)
+        else:
+            raise TypeError
+        self.pre_text = str(pre_text)
+        self.value = int(value)
+        self.symbol = str(symbol)
+        self.symbol_empty = str(symbol_empty)
+        self.pre_value = str(pre_value)
+        self.display_value = bool(display_value)
+        self.post_value = str(post_value)
+
+
+def slider_ui(sliders=["Template", Slider(pre_text="template", display_value=True)], title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+    """
+    Prints the title and then a list of sliders that the user can cycle between, and adjust with the arrow keys. Exit with enter.\n
+    Accepts a list of mainly Slider objects.\n
+    if an element in the list is not a slider object, it will be printed, (or if it's None, the line will be blank) and cannot be selected.
+    """
+    try:
+        from msvcrt import getch
+    except ModuleNotFoundError:
+        input("\n\nmsvcrt MODULE NOT FOUND!\nTHIS MODULE IS WINDOWS ONLY!\n\n")
+    
+    selected = 0
+    while type(sliders[selected]) != Slider:
+        selected += 1
+        if selected > len(sliders) - 1:
+            selected = 0
+    action = 0    
+    while action != 5:
+        # render
+        # clear screen
+        print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+        if title != None:
+            print(title + "\n")
+        for x in range(len(sliders)):
+            if sliders[x] == None:
+                print()
+            else:
+                try:
+                    if selected != x:
+                        print(not_selected_icon, end="")
+                    else:
+                        print(selected_icon, end="")
+
+                    print(sliders[x].pre_text, end="")
+                    for y in sliders[x].section:
+                        if y >= sliders[x].value:
+                            print(sliders[x].symbol_empty, end="")
+                        else:
+                            print(sliders[x].symbol, end="")
+                    print(sliders[x].pre_value, end="")
+                    if sliders[x].display_value:
+                        print(sliders[x].value, end="")
+                    print(sliders[x].post_value, end="")
+
+                    if selected != x:
+                        print(not_selected_icon_right)
+                    else:
+                        print(selected_icon_right)
+                except AttributeError:
+                    print(sliders[x])
+        # slider select
+        arrow = False
+        action = 0
+        while action == 0:
+            key = getch()
+            # b"\x1b" = esc
+            # print(key)
+            if arrow and key == b"P":
+                action = 1
+            elif arrow and key == b"H":
+                action = 2
+            elif arrow and key == b"M":
+                action = -1
+            elif arrow and key == b"K":
+                action = -2
+            elif key == b"\r":
+                action = 5
+            arrow = False
+            if key == b"\xe0" or key == b"\x00":
+                arrow = True
+        # move selection
+        if 0 < action < 5:
+            while True:
+                if action == 1:
+                    selected += 1
+                    if selected > len(sliders) - 1:
+                        selected = 0
+                else:
+                    selected -= 1
+                    if selected < 0:
+                        selected = len(sliders) - 1
+                if type(sliders[selected]) == Slider:
+                    break
+        # move slider
+        elif 0 > action:
+            while True:
+                if action == -1:
+                    if sliders[selected].value + sliders[selected].section.step <= sliders[selected].section.stop:
+                        sliders[selected].value += sliders[selected].section.step
+                else:
+                    if sliders[selected].value - sliders[selected].section.step >= sliders[selected].section.start:
+                        sliders[selected].value -= sliders[selected].section.step
+                if type(sliders[selected]) == Slider:
+                    break
+
+
 def list_ui(answers=["Yes", "No"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
     """
     Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
@@ -209,6 +326,7 @@ def list_ui(answers=["Yes", "No"], question=None, selected_icon=">", not_selecte
                 if answers[selected] != None:
                     break
     return selected
+
 
 def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     """
@@ -322,3 +440,16 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
 # print(list_ui(["1", "2", "3", None, None, None, "Back", None, None, "lol"], "Are you old?", "-->", "  #", "<--", "#  "))
+# sliders = []
+# sliders.append(Slider(13, 5, "test 1 |", "#", "-", "| ", True, "$"))
+# sliders.append(None)
+# sliders.append("2. test")
+# sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
+# sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
+# sliders.append(Slider())
+# slider_ui(sliders, "test")
+# for slider in sliders:
+#     try:
+#         print(slider.pre_text + str(slider.value))
+#     except AttributeError:
+#         pass
