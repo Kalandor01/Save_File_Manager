@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.6.1'
+__version__ = '1.6.2'
 
 from numpy import random as npr
 
@@ -156,9 +156,10 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
 class Slider:
     """
     Object for the slider_ui method\n
+    Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
     """
-    def __init__(self, section=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value=""):
+    def __init__(self, section=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
         if type(section) == range:
             self.section = section
         elif type(section) == int:
@@ -172,6 +173,7 @@ class Slider:
         self.pre_value = str(pre_value)
         self.display_value = bool(display_value)
         self.post_value = str(post_value)
+        self.multiline = bool(multiline)
 
 
 def slider_ui(sliders=["Template", Slider(pre_text="template", display_value=True)], title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
@@ -202,22 +204,45 @@ def slider_ui(sliders=["Template", Slider(pre_text="template", display_value=Tru
                 print()
             else:
                 try:
+                    # icon
                     if selected != x:
                         print(not_selected_icon, end="")
                     else:
                         print(selected_icon, end="")
-
-                    print(sliders[x].pre_text, end="")
+                    # pre text
+                    if sliders[x].multiline:
+                        if selected != x:
+                            print(sliders[x].pre_text.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                        else:
+                            print(sliders[x].pre_text.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                    else:
+                        print(sliders[x].pre_text, end="")
+                    # bar
                     for y in sliders[x].section:
                         if y >= sliders[x].value:
                             print(sliders[x].symbol_empty, end="")
                         else:
                             print(sliders[x].symbol, end="")
-                    print(sliders[x].pre_value, end="")
+                    # pre value
+                    if sliders[x].multiline:
+                        if selected != x:
+                            print(sliders[x].pre_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                        else:
+                            print(sliders[x].pre_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                    else:
+                        print(sliders[x].pre_value, end="")
+                    # value
                     if sliders[x].display_value:
                         print(sliders[x].value, end="")
-                    print(sliders[x].post_value, end="")
-
+                    # post value
+                    if sliders[x].multiline:
+                        if selected != x:
+                            print(sliders[x].post_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                        else:
+                            print(sliders[x].post_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                    else:
+                        print(sliders[x].post_value, end="")
+                    # icon right
                     if selected != x:
                         print(not_selected_icon_right)
                     else:
@@ -270,11 +295,12 @@ def slider_ui(sliders=["Template", Slider(pre_text="template", display_value=Tru
                     break
 
 
-def list_ui(answers=["Yes", "No"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+def list_ui(answers=["Yes", "No"], question=None, multiline=False, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
     """
     Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
     Gives back a number from 0-n acording to the size of the list that was passed in.\n
-    if the answer is None the line will be blank and cannot be selected. 
+    if the answer is None the line will be blank and cannot be selected. \n
+    Multiline makes the "cursor" draw at every line if the text is multiline.
     """
     try:
         from msvcrt import getch
@@ -296,9 +322,15 @@ def list_ui(answers=["Yes", "No"], question=None, selected_icon=">", not_selecte
         for x in range(len(answers)):
             if answers[x] != None:
                 if selected != x:
-                    print(not_selected_icon + answers[x] + not_selected_icon_right)
+                    if multiline:
+                        print(not_selected_icon + answers[x].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}") + not_selected_icon_right)
+                    else:
+                        print(not_selected_icon + answers[x] + not_selected_icon_right)
                 else:
-                    print(selected_icon + answers[x] + selected_icon_right)
+                    if multiline:
+                        print(selected_icon + answers[x].replace("\n", f"{selected_icon_right}\n{selected_icon}") + selected_icon_right)
+                    else:
+                        print(selected_icon + answers[x] + selected_icon_right)
             else:
                 print()
         # answer select
@@ -446,17 +478,17 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
 # _test_run(5, "save*", "sav", True, True)
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
-# print(list_ui(["1", "2", "3", None, None, None, "Back", None, None, "lol"], "Are you old?", "-->", "  #", "<--", "#  "))
-# sliders = []
-# sliders.append(Slider(13, 5, "test 1 |", "#", "-", "| ", True, "$"))
-# sliders.append(None)
-# sliders.append("2. test")
-# sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
-# sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
-# sliders.append(Slider())
-# slider_ui(sliders, "test")
-# for slider in sliders:
-#     try:
-#         print(slider.pre_text + str(slider.value))
-#     except AttributeError:
-#         pass
+# print(list_ui(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", True, "-->", "  #", "<--", "#  "))
+sliders = []
+sliders.append(Slider(13, 5, "\ntest 1\n|", "#", "-", "|\n", True, "$\n"))
+sliders.append(None)
+sliders.append("2. test")
+sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
+sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
+sliders.append(Slider())
+slider_ui(sliders, "test", ">", "#", "<", "@")
+for slider in sliders:
+    try:
+        print(slider.pre_text + str(slider.value))
+    except AttributeError:
+        pass
