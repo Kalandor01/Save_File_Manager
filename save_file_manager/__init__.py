@@ -479,16 +479,16 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
 # print(list_ui(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", True, "-->", "  #", "<--", "#  "))
-sliders = []
-sliders.append(Slider(13, 5, "\ntest 1\n|", "#", "-", "|\n", True, "$\n"))
-sliders.append(None)
-sliders.append("2. test")
-sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
-sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
-sliders.append(Slider())
-slider_ui(sliders, "test", ">", "#", "<", "@")
-for slider in sliders:
-    try:
-        print(slider.pre_text + str(slider.value))
-    except AttributeError:
-        pass
+# sliders = []
+# sliders.append(Slider(13, 5, "\ntest 1\n|", "#", "-", "|\n", True, "$\n", True))
+# sliders.append(None)
+# sliders.append("2. test")
+# sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
+# sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
+# sliders.append(Slider())
+# slider_ui(sliders, "test", ">", selected_icon_right="<")
+# for slider in sliders:
+#     try:
+#         print(slider.pre_text + str(slider.value))
+#     except AttributeError:
+#         pass
