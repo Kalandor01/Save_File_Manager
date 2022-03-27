@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.6.3'
+__version__ = '1.7'
 
 from numpy import random as npr
 
@@ -153,11 +153,15 @@ def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
     return [-1, option]
 
 
-def get_key():
+def get_key(mode=0):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a number depending on the key type (0-5), and -1 if msvcrt/getch was not found.\n
-    Returned keys for numbers (0-5): [ESC][UP][DOWN][LEFT][RIGHT][ENTER]
+    Returned keys for numbers (0-5): [ESC][UP][DOWN][LEFT][RIGHT][ENTER]\n
+    Depending on the mode, it ignores some keys:\n
+    \t0: don't ignore
+    \t1: ignore left/right
+    \t2: ignore up/down
     """
     try:
         from msvcrt import getch
@@ -171,13 +175,13 @@ def get_key():
         # print(key)
         if key == b"\x1b":
             return 0
-        if arrow and key == b"H":
+        if arrow and mode != 2 and key == b"H":
             return 1
-        elif arrow and key == b"P":
+        elif arrow and mode != 2 and key == b"P":
             return 2
-        elif arrow and key == b"K":
+        elif arrow and mode != 1 and key == b"K":
             return 3
-        elif arrow and key == b"M":
+        elif arrow and mode != 1 and key == b"M":
             return 4
         elif key == b"\r":
             return 5
@@ -185,9 +189,11 @@ def get_key():
         if key == b"\xe0" or key == b"\x00":
             arrow = True
 
+
 class Slider:
     """
-    Object for the slider_ui method\n
+    Object for the options_ui method\n
+    When used as input in the options_ui function, it draws a slider, with the section specifying it's characteristics.\n
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
     """
@@ -208,103 +214,189 @@ class Slider:
         self.multiline = bool(multiline)
 
 
-def slider_ui(sliders=["Template", Slider(pre_text="template", display_value=True)], title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+class Choice:
     """
-    Prints the title and then a list of sliders that the user can cycle between, and adjust with the arrow keys. Exit with enter.\n
-    Accepts a list of mainly Slider objects.\n
-    if an element in the list is not a slider object, it will be printed, (or if it's None, the line will be blank) and cannot be selected.
+    Object for the options_ui method\n
+    When used as input in the options_ui function, it draws a multiple choice seletion, with the choices list specifying the choice names.\n
+    Multiline makes the "cursor" draw at every line if the text is multiline.\n
+    Structure: [pre_text][choice name][pre_value][value][post_value]
+    """
+    def __init__(self, choices=["choice"], value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+        for x in range(len(choices)):
+            choices[x] = str(choices[x])
+        self.choices = list(choices)
+        self.pre_text = str(pre_text)
+        self.value = int(value)
+        self.symbol = str(symbol)
+        self.symbol_empty = str(symbol_empty)
+        self.pre_value = str(pre_value)
+        self.display_value = bool(display_value)
+        self.post_value = str(post_value)
+        self.multiline = bool(multiline)
+
+
+class Toggle:
+    """
+    Object for the options_ui method\n
+    When used as input in the options_ui function, it draws a field that is toggleable with the enter key.\n
+    Multiline makes the "cursor" draw at every line if the text is multiline.\n
+    Structure: [pre_text][symbol or symbol_off][post_value]
+    """
+    def __init__(self, value=0, pre_text="", symbol="on", symbol_off="off", post_value="", multiline=False):
+        self.pre_text = str(pre_text)
+        self.value = int(value)
+        self.symbol = str(symbol)
+        self.symbol_off = str(symbol_off)
+        self.post_value = str(post_value)
+        self.multiline = bool(multiline)
+
+
+def options_ui(elements=["Template", Slider(pre_text="template", display_value=True)], title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+    """
+    Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
+    Accepts mainly a list of objects (Slider, Choice and Toggle).\n
+    if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.
     """
     
     selected = 0
-    while type(sliders[selected]) != Slider:
+    while type(elements[selected]) != Slider and type(elements[selected]) != Choice and type(elements[selected]) != Toggle:
         selected += 1
-        if selected > len(sliders) - 1:
+        if selected > len(elements) - 1:
             selected = 0
-    key = 0    
-    while key != 5:
+    key = -2    
+    while key != 0:
         # render
         # clear screen
         print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
         if title != None:
             print(title + "\n")
-        for x in range(len(sliders)):
-            if sliders[x] == None:
+        for x in range(len(elements)):
+            if elements[x] == None:
                 print()
-            else:
-                try:
-                    # icon
+            elif type(elements[x]) == Slider or type(elements[x]) == Choice or type(elements[x]) == Toggle:
+                # common
+                # icon
+                if selected != x:
+                    print(not_selected_icon, end="")
+                else:
+                    print(selected_icon, end="")
+                # pre text
+                if elements[x].multiline and elements[x].pre_text.find("\n"):
                     if selected != x:
-                        print(not_selected_icon, end="")
+                        print(elements[x].pre_text.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                     else:
-                        print(selected_icon, end="")
-                    # pre text
-                    if sliders[x].multiline:
-                        if selected != x:
-                            print(sliders[x].pre_text.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
-                        else:
-                            print(sliders[x].pre_text.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
-                    else:
-                        print(sliders[x].pre_text, end="")
+                        print(elements[x].pre_text.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                else:
+                    print(elements[x].pre_text, end="")
+                # current value display
+                # slider
+                if type(elements[x]) == Slider:
                     # bar
-                    for y in sliders[x].section:
-                        if y >= sliders[x].value:
-                            print(sliders[x].symbol_empty, end="")
+                    for y in elements[x].section:
+                        if y >= elements[x].value:
+                            print(elements[x].symbol_empty, end="")
                         else:
-                            print(sliders[x].symbol, end="")
+                            print(elements[x].symbol, end="")
+                # choice
+                if type(elements[x]) == Choice:
+                    # current choice
+                    if elements[x].multiline and elements[x].choices[elements[x].value].find("\n"):
+                        if selected != x:
+                            print(elements[x].choices[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                        else:
+                            print(elements[x].choices[elements[x].value].replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                    else:
+                        print(elements[x].choices[elements[x].value], end="")
+                # toggle
+                if type(elements[x]) == Toggle:
+                    # on/off
+                    if elements[x].value == 0:
+                        print(elements[x].symbol_off, end="")
+                    else:
+                        print(elements[x].symbol, end="")
+                # (pre) value
+                if type(elements[x]) == Slider or type(elements[x]) == Choice:
                     # pre value
-                    if sliders[x].multiline:
+                    if elements[x].multiline and elements[x].pre_value.find("\n"):
                         if selected != x:
-                            print(sliders[x].pre_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                            print(elements[x].pre_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                         else:
-                            print(sliders[x].pre_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                            print(elements[x].pre_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
                     else:
-                        print(sliders[x].pre_value, end="")
+                        print(elements[x].pre_value, end="")
                     # value
-                    if sliders[x].display_value:
-                        print(sliders[x].value, end="")
-                    # post value
-                    if sliders[x].multiline:
-                        if selected != x:
-                            print(sliders[x].post_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                    if elements[x].display_value:
+                        if type(elements[x]) == Slider:
+                            print(elements[x].value, end="")
                         else:
-                            print(sliders[x].post_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
-                    else:
-                        print(sliders[x].post_value, end="")
-                    # icon right
+                            print(f"{elements[x].value}/{len(elements[x].choices)}", end="")
+                # common end
+                # post value
+                if elements[x].multiline and elements[x].post_value.find("\n"):
                     if selected != x:
-                        print(not_selected_icon_right)
+                        print(elements[x].post_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                     else:
-                        print(selected_icon_right)
-                except AttributeError:
-                    print(sliders[x])
-        # slider select
-        key = 0
-        while key == 0:
-            key = get_key()
-        # move selection
-        if 1 <= key <= 2:
-            while True:
-                if key == 2:
-                    selected += 1
-                    if selected > len(sliders) - 1:
-                        selected = 0
+                        print(elements[x].post_value.replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
                 else:
-                    selected -= 1
-                    if selected < 0:
-                        selected = len(sliders) - 1
-                if type(sliders[selected]) == Slider:
-                    break
-        # move slider
-        elif 3 <= key <= 4:
-            while True:
-                if key == 4:
-                    if sliders[selected].value + sliders[selected].section.step <= sliders[selected].section.stop:
-                        sliders[selected].value += sliders[selected].section.step
+                    print(elements[x].post_value, end="")
+                # icon right
+                if selected != x:
+                    print(not_selected_icon_right)
                 else:
-                    if sliders[selected].value - sliders[selected].section.step >= sliders[selected].section.start:
-                        sliders[selected].value -= sliders[selected].section.step
-                if type(sliders[selected]) == Slider:
-                    break
+                    print(selected_icon_right)
+            else:
+                print(elements[x])
+        # move selection/change value
+        actual_move = False
+        while not actual_move:
+            # to prevent useless screen re-render at slider
+            actual_move = True
+            # get key
+            key = 5
+            if type(elements[selected]) == Toggle:
+                key = get_key(1)
+            else:
+                while key == 5:
+                    key = get_key()
+            # move selection
+            if 1 <= key <= 2:
+                while True:
+                    if key == 2:
+                        selected += 1
+                        if selected > len(elements) - 1:
+                            selected = 0
+                    else:
+                        selected -= 1
+                        if selected < 0:
+                            selected = len(elements) - 1
+                    if type(elements[selected]) == Slider or type(elements[selected]) == Choice or type(elements[selected]) == Toggle:
+                        break
+            # move slider/choice
+            elif 3 <= key <= 4:
+                if type(elements[selected]) == Slider:
+                    if key == 4:
+                        if elements[selected].value + elements[selected].section.step <= elements[selected].section.stop:
+                            elements[selected].value += elements[selected].section.step
+                        else:
+                            actual_move = False
+                    else:
+                        if elements[selected].value - elements[selected].section.step >= elements[selected].section.start:
+                            elements[selected].value -= elements[selected].section.step
+                        else:
+                            actual_move = False
+                else:
+                    if key == 4:
+                        elements[selected].value += 1
+                        if elements[selected].value >= len(elements[selected].choices) - 1:
+                            elements[selected].value = 0
+                    else:
+                        elements[selected].value -= 1
+                        if elements[selected].value < 0:
+                            elements[selected].value = len(elements[selected].choices) - 1
+            # toggle
+            elif key == 5:
+                elements[selected].value += 1
+                elements[selected].value %= 2
 
 
 class UI_list:
@@ -353,9 +445,9 @@ class UI_list:
                 else:
                     print()
             # answer select
-            key = get_key()
-            while key != 1 and key != 2 and key != 5:
-                key = get_key()
+            key = get_key(1)
+            while key == 0:
+                key = get_key(1)
             # move selection
             if key != 5:
                 while True:
@@ -371,10 +463,12 @@ class UI_list:
                         break
         return selected
 
+
 def _menu_ui(layers=[]):
     """
-    PROTOTYPE AND WRONG!!!
+    PROTOTYPE AND DOESN'T WORK!!!
     """
+    file_data="NO ERRORS"
     layers = []
     layers.append("LIST OBJECT HERE?! + FUNCTION?")
     
@@ -386,14 +480,7 @@ def _menu_ui(layers=[]):
             option = 1
         # new file
         if option == 0:
-            new_slot = 1
-            for data in file_data:
-                if data[0] == new_slot:
-                    new_slot += 1
-            if new_slot <= max_saves:
-                return [1, new_slot]
-            else:
-                input(f"No empty save files! Delete a file to continue!")
+            pass
         # load/delete
         else:
             # get data from file_data
@@ -416,9 +503,7 @@ def _menu_ui(layers=[]):
                     if option != len(list_data) - 1:
                         sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?").display()
                         if sure == 1:
-                            remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
-                            list_data.pop(option)
-                            file_data.pop(option)
+                            pass
                     else:
                         delete_mode = False
             # back
@@ -540,16 +625,14 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", True, "-->", "  #", "<--", "#  ").display())
-# sliders = []
-# sliders.append(Slider(13, 5, "\ntest 1\n|", "#", "-", "|\n", True, "$\n", True))
-# sliders.append(None)
-# sliders.append("2. test")
-# sliders.append(Slider(range(2, 20, 2), 2, "test 2 |", "#", "-", "| ", True, "l"))
-# sliders.append(Slider(range(8), 8, "test 3 |", "#", "-", "| ", True, "kg"))
-# sliders.append(Slider())
-# slider_ui(sliders, "test", ">", selected_icon_right="<")
-# for slider in sliders:
-#     try:
-#         print(slider.pre_text + str(slider.value))
-#     except AttributeError:
-#         pass
+# elements = []
+# elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
+# elements.append(None)
+# elements.append("2. test")
+# elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
+# elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", "X", "O", " lol ", True, "$", True))
+# elements.append(Toggle(1, "toggle test ", post_value=" $"))
+# options_ui(elements, "test", ">", selected_icon_right="<")
+# for element in elements:
+#     if type(element) == Slider or type(element) == Choice or type(element) == Toggle:
+#         print(element.pre_text + str(element.value))
