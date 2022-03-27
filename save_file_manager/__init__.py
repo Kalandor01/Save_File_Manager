@@ -556,7 +556,7 @@ def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", "X ", "  ").display()
+                        option = UI_list(list_data, " Delete mode!", False, "X ", "  ").display()
                         if option != len(list_data) - 1:
                             sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?").display()
                             if sure == 1:
