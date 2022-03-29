@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.7'
+__version__ = '1.7.1'
 
 from numpy import random as npr
 
