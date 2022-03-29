@@ -400,14 +400,14 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
 
 
 class UI_list:
-    def __init__(self, answers=["No", "Yes"], question=None, multiline=False, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False):
         self.answers = list(answers)
         self.question = str(question)
-        self.multiline = bool(multiline)
         self.s_icon = str(selected_icon)
         self.icon = str(not_selected_icon)
         self.s_icon_r = str(selected_icon_right)
         self.icon_r = str(not_selected_icon_right)
+        self.multiline = bool(multiline)
 
 
     def display(self):
@@ -556,7 +556,7 @@ def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", False, "X ", "  ").display()
+                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False).display()
                         if option != len(list_data) - 1:
                             sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?").display()
                             if sure == 1:
