@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8'
+__version__ = '1.8.1'
 
 from numpy import random as npr
 
@@ -400,7 +400,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
 
 
 class UI_list:
-    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, menu_actions=[]):
+    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, menu_actions=[]):
         self.answers = list(answers)
         self.question = str(question)
         self.s_icon = str(selected_icon)
@@ -408,6 +408,7 @@ class UI_list:
         self.s_icon_r = str(selected_icon_right)
         self.icon_r = str(not_selected_icon_right)
         self.multiline = bool(multiline)
+        self.can_esc = bool(can_esc)
         self.menu_actions = list(menu_actions)
 
 
@@ -417,6 +418,7 @@ class UI_list:
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
         if the answer is None the line will be blank and cannot be selected. \n
         Multiline makes the "cursor" draw at every line if the text is multiline.\n
+        Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
         If the menu_actions list is not empty, each element coresponds to an element in the answers list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2.), it will run that function.\n
         If the function returns -1 the display function will instantly exit.\n
         If it is a UI_list object, the object's display function will be automaticly called.
@@ -450,6 +452,8 @@ class UI_list:
                         print()
                 # answer select
                 key = get_key(1)
+                if self.can_esc and key == 0:
+                    return -1
                 while key == 0:
                     key = get_key(1)
                 # move selection
@@ -486,13 +490,13 @@ class UI_list:
                 return selected
 
 
-# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", menu_actions=[[_imput, "number: "], [_imput, "nummm: "], None])
-# l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", menu_actions=[_imput, _imput, l3_0, None])
-# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", menu_actions=[_imput, _imput, None])
-# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", menu_actions=[_imput, _imput, None])
-# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", menu_actions=[_imput, _imput, l2_2, None])
-# l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", menu_actions=[_imput, _imput, l2_1, l2_0, None])
-# l0 = UI_list(["function", "l1_0", "l1_1", "back"], "Main menu", menu_actions=[_imput, l1_0, l1_1, None])
+# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, menu_actions=[[_imput, "number: "], [_imput, "nummm: "], None])
+# l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, menu_actions=[_imput, _imput, l3_0, None])
+# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, menu_actions=[_imput, _imput, None])
+# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, menu_actions=[_imput, _imput, None])
+# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, menu_actions=[_imput, _imput, l2_2, None])
+# l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, menu_actions=[_imput, _imput, l2_1, l2_0, None])
+# l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", menu_actions=[_imput, l1_0, l1_1, None])
 # l0.display()
 
 
