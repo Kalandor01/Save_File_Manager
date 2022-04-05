@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.7.1'
+__version__ = '1.8'
 
 from numpy import random as npr
 
@@ -400,7 +400,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
 
 
 class UI_list:
-    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False):
+    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, menu_actions=[]):
         self.answers = list(answers)
         self.question = str(question)
         self.s_icon = str(selected_icon)
@@ -408,6 +408,7 @@ class UI_list:
         self.s_icon_r = str(selected_icon_right)
         self.icon_r = str(not_selected_icon_right)
         self.multiline = bool(multiline)
+        self.menu_actions = list(menu_actions)
 
 
     def display(self):
@@ -415,100 +416,84 @@ class UI_list:
         Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
         if the answer is None the line will be blank and cannot be selected. \n
-        Multiline makes the "cursor" draw at every line if the text is multiline.
+        Multiline makes the "cursor" draw at every line if the text is multiline.\n
+        If the menu_actions list is not empty, each element coresponds to an element in the answers list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2.), it will run that function.\n
+        If the function returns -1 the display function will instantly exit.\n
+        If it is a UI_list object, the object's display function will be automaticly called.
         """
-        
-        selected = 0
-        while self.answers[selected] == None:
-            selected += 1
-            if selected > len(self.answers) - 1:
-                selected = 0
-        key = 0
-        while key != 5:
-            # render
-            # clear screen
-            print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-            if self.question != None:
-                print(self.question + "\n")
-            for x in range(len(self.answers)):
-                if self.answers[x] != None:
-                    if selected != x:
-                        if self.multiline:
-                            print(self.icon + self.answers[x].replace("\n", f"{self.icon_r}\n{self.icon}") + self.icon_r)
+        while True:
+            selected = 0
+            while self.answers[selected] == None:
+                selected += 1
+                if selected > len(self.answers) - 1:
+                    selected = 0
+            key = 0
+            while key != 5:
+                # render
+                # clear screen
+                print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+                if self.question != None:
+                    print(self.question + "\n")
+                for x in range(len(self.answers)):
+                    if self.answers[x] != None:
+                        if selected != x:
+                            if self.multiline:
+                                print(self.icon + self.answers[x].replace("\n", f"{self.icon_r}\n{self.icon}") + self.icon_r)
+                            else:
+                                print(self.icon + self.answers[x] + self.icon_r)
                         else:
-                            print(self.icon + self.answers[x] + self.icon_r)
+                            if self.multiline:
+                                print(self.s_icon + self.answers[x].replace("\n", f"{self.s_icon_r}\n{self.s_icon}") + self.s_icon_r)
+                            else:
+                                print(self.s_icon + self.answers[x] + self.s_icon_r)
                     else:
-                        if self.multiline:
-                            print(self.s_icon + self.answers[x].replace("\n", f"{self.s_icon_r}\n{self.s_icon}") + self.s_icon_r)
-                        else:
-                            print(self.s_icon + self.answers[x] + self.s_icon_r)
-                else:
-                    print()
-            # answer select
-            key = get_key(1)
-            while key == 0:
+                        print()
+                # answer select
                 key = get_key(1)
-            # move selection
-            if key != 5:
-                while True:
-                    if key == 2:
-                        selected += 1
-                        if selected > len(self.answers) - 1:
-                            selected = 0
+                while key == 0:
+                    key = get_key(1)
+                # move selection
+                if key != 5:
+                    while True:
+                        if key == 2:
+                            selected += 1
+                            if selected > len(self.answers) - 1:
+                                selected = 0
+                        else:
+                            selected -= 1
+                            if selected < 0:
+                                selected = len(self.answers) - 1
+                        if self.answers[selected] != None:
+                            break
+            # menu action
+            if self.menu_actions != [] and selected < len(self.menu_actions) and self.menu_actions[selected] != None:
+                if type(self.menu_actions[selected]) == list and len(self.menu_actions[selected]) == 2:
+                    if self.menu_actions[selected][0](self.menu_actions[selected][1]) == -1:
+                        return selected
+                elif callable(self.menu_actions[selected]):
+                    if self.menu_actions[selected]() == -1:
+                        return selected
+                else:
+                    # lazy back button
+                    try:
+                        self.menu_actions[selected].display
+                    except AttributeError:
+                        # print("Option is not a UI_list object!")
+                        return selected
                     else:
-                        selected -= 1
-                        if selected < 0:
-                            selected = len(self.answers) - 1
-                    if self.answers[selected] != None:
-                        break
-        return selected
-
-
-def _menu_ui(layers=[]):
-    """
-    PROTOTYPE AND DOESN'T WORK!!!
-    """
-    file_data="NO ERRORS"
-    layers = []
-    layers.append("LIST OBJECT HERE?! + FUNCTION?")
-    
-    while True:
-        if in_main_menu:
-            in_main_menu = False
-            option = UI_list(["New save", "Load/Delete save"], " Main menu").display()
-        else:
-            option = 1
-        # new file
-        if option == 0:
-            pass
-        # load/delete
-        else:
-            # get data from file_data
-            list_data = []
-            for data in file_data:
-                list_data.append(f"{data[0]}. {data[1]}")
-            list_data.append(None)
-            list_data.append("Delete file")
-            list_data.append("Back")
-            option = UI_list(list_data, " Level select").display()
-            # load
-            if option < len(file_data):
-                return [0, file_data[option][0]]
-            # delete
-            elif option == len(file_data) + 1:
-                list_data.pop(len(list_data) - 2)
-                delete_mode = True
-                while delete_mode and len(file_data) > 0:
-                    option = UI_list(list_data, " Delete mode!", "X ", "  ").display()
-                    if option != len(list_data) - 1:
-                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?").display()
-                        if sure == 1:
-                            pass
-                    else:
-                        delete_mode = False
-            # back
+                        self.menu_actions[selected].display()
             else:
-                in_main_menu = True
+                return selected
+
+
+# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", menu_actions=[[_imput, "number: "], [_imput, "nummm: "], None])
+# l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", menu_actions=[_imput, _imput, l3_0, None])
+# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", menu_actions=[_imput, _imput, None])
+# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", menu_actions=[_imput, _imput, None])
+# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", menu_actions=[_imput, _imput, l2_2, None])
+# l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", menu_actions=[_imput, _imput, l2_1, l2_0, None])
+# l0 = UI_list(["function", "l1_0", "l1_1", "back"], "Main menu", menu_actions=[_imput, l1_0, l1_1, None])
+# l0.display()
 
 
 def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
