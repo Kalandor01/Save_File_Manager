@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.1'
+__version__ = '1.8.2'
 
 from numpy import random as npr
 
@@ -419,7 +419,7 @@ class UI_list:
         if the answer is None the line will be blank and cannot be selected. \n
         Multiline makes the "cursor" draw at every line if the text is multiline.\n
         Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
-        If the menu_actions list is not empty, each element coresponds to an element in the answers list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2.), it will run that function.\n
+        If the menu_actions list is not empty, each element coresponds to an element in the answers list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
         If the function returns -1 the display function will instantly exit.\n
         If it is a UI_list object, the object's display function will be automaticly called.
         """
@@ -469,28 +469,40 @@ class UI_list:
                                 selected = len(self.answers) - 1
                         if self.answers[selected] != None:
                             break
-            # menu action
+            # menu actions
             if self.menu_actions != [] and selected < len(self.menu_actions) and self.menu_actions[selected] != None:
-                if type(self.menu_actions[selected]) == list and len(self.menu_actions[selected]) == 2:
-                    if self.menu_actions[selected][0](self.menu_actions[selected][1]) == -1:
+                # list
+                if type(self.menu_actions[selected]) == list and len(self.menu_actions[selected]) >= 2:
+                    lis = []
+                    di = dict()
+                    for elem in self.menu_actions[selected]:
+                        if type(elem) == dict:
+                            di.update(elem)
+                        else:
+                            lis.append(elem)
+                    if lis[0](*lis[1:], **di) == -1:
                         return selected
+                # normal function
                 elif callable(self.menu_actions[selected]):
                     if self.menu_actions[selected]() == -1:
                         return selected
+                # ui
                 else:
                     # lazy back button
                     try:
                         self.menu_actions[selected].display
                     except AttributeError:
-                        # print("Option is not a UI_list object!")
+                        print("Option is not a UI_list object!")
                         return selected
                     else:
                         self.menu_actions[selected].display()
             else:
                 return selected
 
+# def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
+#     input(f"{a}, {b}, {c}, {d}, {e}, {f}")
 
-# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, menu_actions=[[_imput, "number: "], [_imput, "nummm: "], None])
+# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, menu_actions=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [_imput, "nummm: "], None])
 # l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, menu_actions=[_imput, _imput, l3_0, None])
 # l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, menu_actions=[_imput, _imput, None])
 # l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, menu_actions=[_imput, _imput, None])
