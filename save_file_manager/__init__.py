@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.2'
+__version__ = '1.8.2.1'
 
 from numpy import random as npr
 
@@ -17,9 +17,9 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
+def encode_save(save_file_lines, save_num=1, save_name="save*", save_ext="sav"):
     """
-    Creates a file that has been encoded, from a list.
+    Creates a file that has been encoded, from a list of strings.
     """
     from math import pi
     from base64 import b64encode
@@ -27,7 +27,7 @@ def encode_save(save_file=[], save_num=1, save_name="save*", save_ext="sav"):
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     r = npr.RandomState(int(save_num * pi * 3853))
     encode_64 = r.randint(3, 10)
-    for line in save_file:
+    for line in save_file_lines:
         line_enc = str(line).encode("windows-1250")
         for _ in range(encode_64):
             line_enc = b64encode(line_enc)
@@ -101,9 +101,10 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
     return file_data
 
 
-def manage_saves(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves(file_data, max_saves=5, save_name="save*", save_ext="sav"):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save.\n
+    Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
     Returns the option the user selected:\n
     \t[0, x] = load, into x slot\n
     \t[1, x] = new file, into x slot\n
@@ -251,7 +252,7 @@ class Toggle:
         self.multiline = bool(multiline)
 
 
-def options_ui(elements=["Template", Slider(pre_text="template", display_value=True)], title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice and Toggle).\n
@@ -281,7 +282,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
                 else:
                     print(selected_icon, end="")
                 # pre text
-                if elements[x].multiline and elements[x].pre_text.find("\n"):
+                if elements[x].multiline and elements[x].pre_text.find("\n") != -1:
                     if selected != x:
                         print(elements[x].pre_text.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                     else:
@@ -300,7 +301,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
                 # choice
                 if type(elements[x]) == Choice:
                     # current choice
-                    if elements[x].multiline and elements[x].choices[elements[x].value].find("\n"):
+                    if elements[x].multiline and elements[x].choices[elements[x].value].find("\n") != -1:
                         if selected != x:
                             print(elements[x].choices[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                         else:
@@ -317,7 +318,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
                 # (pre) value
                 if type(elements[x]) == Slider or type(elements[x]) == Choice:
                     # pre value
-                    if elements[x].multiline and elements[x].pre_value.find("\n"):
+                    if elements[x].multiline and elements[x].pre_value.find("\n") != -1:
                         if selected != x:
                             print(elements[x].pre_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                         else:
@@ -332,7 +333,7 @@ def options_ui(elements=["Template", Slider(pre_text="template", display_value=T
                             print(f"{elements[x].value}/{len(elements[x].choices)}", end="")
                 # common end
                 # post value
-                if elements[x].multiline and elements[x].post_value.find("\n"):
+                if elements[x].multiline and elements[x].post_value.find("\n") != -1:
                     if selected != x:
                         print(elements[x].post_value.replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                     else:
@@ -512,9 +513,10 @@ class UI_list:
 # l0.display()
 
 
-def manage_saves_ui(file_data=[], max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav"):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
+    Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
     Returns the option the user selected:\n
     \t[0, x] = load, into x slot\n
     \t[1, x] = new file, into x slot\n
@@ -625,7 +627,7 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
 # _test_run(5, "save*", "sav", True, True)
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
-# print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", True, "-->", "  #", "<--", "#  ").display())
+# print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 # elements = []
 # elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
 # elements.append(None)
