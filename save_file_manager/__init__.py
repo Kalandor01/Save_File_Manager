@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.2.1'
+__version__ = '1.8.2.2'
 
 from numpy import random as npr
 
@@ -218,14 +218,14 @@ class Slider:
 class Choice:
     """
     Object for the options_ui method\n
-    When used as input in the options_ui function, it draws a multiple choice seletion, with the choices list specifying the choice names.\n
+    When used as input in the options_ui function, it draws a multiple choice seletion, with the choices_list list specifying the choice names.\n
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][choice name][pre_value][value][post_value]
     """
-    def __init__(self, choices=["choice"], value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
-        for x in range(len(choices)):
-            choices[x] = str(choices[x])
-        self.choices = list(choices)
+    def __init__(self, choices_list, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+        for x in range(len(choices_list)):
+            choices_list[x] = str(choices_list[x])
+        self.choices_list = list(choices_list)
         self.pre_text = str(pre_text)
         self.value = int(value)
         self.symbol = str(symbol)
@@ -301,13 +301,13 @@ def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", s
                 # choice
                 if type(elements[x]) == Choice:
                     # current choice
-                    if elements[x].multiline and elements[x].choices[elements[x].value].find("\n") != -1:
+                    if elements[x].multiline and elements[x].choices_list[elements[x].value].find("\n") != -1:
                         if selected != x:
-                            print(elements[x].choices[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                            print(elements[x].choices_list[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                         else:
-                            print(elements[x].choices[elements[x].value].replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                            print(elements[x].choices_list[elements[x].value].replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
                     else:
-                        print(elements[x].choices[elements[x].value], end="")
+                        print(elements[x].choices_list[elements[x].value], end="")
                 # toggle
                 if type(elements[x]) == Toggle:
                     # on/off
@@ -330,7 +330,7 @@ def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", s
                         if type(elements[x]) == Slider:
                             print(elements[x].value, end="")
                         else:
-                            print(f"{elements[x].value}/{len(elements[x].choices)}", end="")
+                            print(f"{elements[x].value}/{len(elements[x].choices_list)}", end="")
                 # common end
                 # post value
                 if elements[x].multiline and elements[x].post_value.find("\n") != -1:
@@ -388,12 +388,12 @@ def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", s
                 else:
                     if key == 4:
                         elements[selected].value += 1
-                        if elements[selected].value >= len(elements[selected].choices) - 1:
+                        if elements[selected].value >= len(elements[selected].choices_list) - 1:
                             elements[selected].value = 0
                     else:
                         elements[selected].value -= 1
                         if elements[selected].value < 0:
-                            elements[selected].value = len(elements[selected].choices) - 1
+                            elements[selected].value = len(elements[selected].choices_list) - 1
             # toggle
             elif key == 5:
                 elements[selected].value += 1
@@ -401,8 +401,8 @@ def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", s
 
 
 class UI_list:
-    def __init__(self, answers=["No", "Yes"], question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, menu_actions=[]):
-        self.answers = list(answers)
+    def __init__(self, answer_list, question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list=None):
+        self.answer_list = list(answer_list)
         self.question = str(question)
         self.s_icon = str(selected_icon)
         self.icon = str(not_selected_icon)
@@ -410,7 +410,10 @@ class UI_list:
         self.icon_r = str(not_selected_icon_right)
         self.multiline = bool(multiline)
         self.can_esc = bool(can_esc)
-        self.menu_actions = list(menu_actions)
+        if action_list == None:
+            self.action_list = []
+        else:
+            self.action_list = list(action_list)
 
 
     def display(self):
@@ -420,15 +423,15 @@ class UI_list:
         if the answer is None the line will be blank and cannot be selected. \n
         Multiline makes the "cursor" draw at every line if the text is multiline.\n
         Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
-        If the menu_actions list is not empty, each element coresponds to an element in the answers list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
+        If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
         If the function returns -1 the display function will instantly exit.\n
         If it is a UI_list object, the object's display function will be automaticly called.
         """
         while True:
             selected = 0
-            while self.answers[selected] == None:
+            while self.answer_list[selected] == None:
                 selected += 1
-                if selected > len(self.answers) - 1:
+                if selected > len(self.answer_list) - 1:
                     selected = 0
             key = 0
             while key != 5:
@@ -437,18 +440,18 @@ class UI_list:
                 print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
                 if self.question != None:
                     print(self.question + "\n")
-                for x in range(len(self.answers)):
-                    if self.answers[x] != None:
+                for x in range(len(self.answer_list)):
+                    if self.answer_list[x] != None:
                         if selected != x:
                             if self.multiline:
-                                print(self.icon + self.answers[x].replace("\n", f"{self.icon_r}\n{self.icon}") + self.icon_r)
+                                print(self.icon + self.answer_list[x].replace("\n", f"{self.icon_r}\n{self.icon}") + self.icon_r)
                             else:
-                                print(self.icon + self.answers[x] + self.icon_r)
+                                print(self.icon + self.answer_list[x] + self.icon_r)
                         else:
                             if self.multiline:
-                                print(self.s_icon + self.answers[x].replace("\n", f"{self.s_icon_r}\n{self.s_icon}") + self.s_icon_r)
+                                print(self.s_icon + self.answer_list[x].replace("\n", f"{self.s_icon_r}\n{self.s_icon}") + self.s_icon_r)
                             else:
-                                print(self.s_icon + self.answers[x] + self.s_icon_r)
+                                print(self.s_icon + self.answer_list[x] + self.s_icon_r)
                     else:
                         print()
                 # answer select
@@ -462,21 +465,21 @@ class UI_list:
                     while True:
                         if key == 2:
                             selected += 1
-                            if selected > len(self.answers) - 1:
+                            if selected > len(self.answer_list) - 1:
                                 selected = 0
                         else:
                             selected -= 1
                             if selected < 0:
-                                selected = len(self.answers) - 1
-                        if self.answers[selected] != None:
+                                selected = len(self.answer_list) - 1
+                        if self.answer_list[selected] != None:
                             break
             # menu actions
-            if self.menu_actions != [] and selected < len(self.menu_actions) and self.menu_actions[selected] != None:
+            if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] != None:
                 # list
-                if type(self.menu_actions[selected]) == list and len(self.menu_actions[selected]) >= 2:
+                if type(self.action_list[selected]) == list and len(self.action_list[selected]) >= 2:
                     lis = []
                     di = dict()
-                    for elem in self.menu_actions[selected]:
+                    for elem in self.action_list[selected]:
                         if type(elem) == dict:
                             di.update(elem)
                         else:
@@ -484,32 +487,32 @@ class UI_list:
                     if lis[0](*lis[1:], **di) == -1:
                         return selected
                 # normal function
-                elif callable(self.menu_actions[selected]):
-                    if self.menu_actions[selected]() == -1:
+                elif callable(self.action_list[selected]):
+                    if self.action_list[selected]() == -1:
                         return selected
                 # ui
                 else:
                     # lazy back button
                     try:
-                        self.menu_actions[selected].display
+                        self.action_list[selected].display
                     except AttributeError:
                         print("Option is not a UI_list object!")
                         return selected
                     else:
-                        self.menu_actions[selected].display()
+                        self.action_list[selected].display()
             else:
                 return selected
 
 # def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
 #     input(f"{a}, {b}, {c}, {d}, {e}, {f}")
 
-# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, menu_actions=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [_imput, "nummm: "], None])
-# l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, menu_actions=[_imput, _imput, l3_0, None])
-# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, menu_actions=[_imput, _imput, None])
-# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, menu_actions=[_imput, _imput, None])
-# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, menu_actions=[_imput, _imput, l2_2, None])
-# l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, menu_actions=[_imput, _imput, l2_1, l2_0, None])
-# l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", menu_actions=[_imput, l1_0, l1_1, None])
+# l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, action_list=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [_imput, "nummm: "], None])
+# l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, action_list=[_imput, _imput, l3_0, None])
+# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, action_list=[_imput, _imput, None])
+# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, action_list=[_imput, _imput, None])
+# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[_imput, _imput, l2_2, None])
+# l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, action_list=[_imput, _imput, l2_1, l2_0, None])
+# l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", action_list=[_imput, l1_0, l1_1, None])
 # l0.display()
 
 
