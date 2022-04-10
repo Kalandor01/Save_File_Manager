@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.2.2'
+__version__ = '1.8.2.2.1'
 
 from numpy import random as npr
 
@@ -553,7 +553,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav"):
                 list_data.append(None)
                 list_data.append("Delete file")
                 list_data.append("Back")
-                option = UI_list(list_data, " Level select").display()
+                option = UI_list(list_data, " File select").display()
                 # load
                 if option < len(file_data):
                     return [0, file_data[option][0]]
