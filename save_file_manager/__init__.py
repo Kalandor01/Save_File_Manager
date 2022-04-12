@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a list choice UI.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.2.2.1'
+__version__ = '1.8.3'
 
 from numpy import random as npr
 
@@ -17,7 +17,7 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file_lines, save_num=1, save_name="save*", save_ext="sav"):
+def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="sav"):
     """
     Creates a file that has been encoded, from a list of strings.
     """
@@ -101,7 +101,7 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
     return file_data
 
 
-def manage_saves(file_data, max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -198,7 +198,7 @@ class Slider:
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
     """
-    def __init__(self, section=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+    def __init__(self, section:int|range=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
         if type(section) == range:
             self.section = section
         elif type(section) == int:
@@ -222,7 +222,7 @@ class Choice:
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][choice name][pre_value][value][post_value]
     """
-    def __init__(self, choices_list, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+    def __init__(self, choices_list:list, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
         for x in range(len(choices_list)):
             choices_list[x] = str(choices_list[x])
         self.choices_list = list(choices_list)
@@ -252,7 +252,7 @@ class Toggle:
         self.multiline = bool(multiline)
 
 
-def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice and Toggle).\n
@@ -401,7 +401,7 @@ def options_ui(elements, title=None, selected_icon=">", not_selected_icon=" ", s
 
 
 class UI_list:
-    def __init__(self, answer_list, question=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list=None):
+    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None):
         self.answer_list = list(answer_list)
         self.question = str(question)
         self.s_icon = str(selected_icon)
@@ -516,7 +516,7 @@ class UI_list:
 # l0.display()
 
 
-def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves_ui(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
