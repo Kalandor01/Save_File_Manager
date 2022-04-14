@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.3'
+__version__ = '1.8.3.1'
 
 from numpy import random as npr
 
@@ -516,13 +516,14 @@ class UI_list:
 # l0.display()
 
 
-def manage_saves_ui(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
     Returns the option the user selected:\n
     \t[0, x] = load, into x slot\n
     \t[1, x] = new file, into x slot\n
+    \t[-1, -1] = exit
     """
     from os import remove
 
@@ -531,7 +532,7 @@ def manage_saves_ui(file_data:list, max_saves=5, save_name="save*", save_ext="sa
         if len(file_data):
             if in_main_menu:
                 in_main_menu = False
-                option = UI_list(["New save", "Load/Delete save"], " Main menu").display()
+                option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc=can_exit).display()
             else:
                 option = 1
             # new file
@@ -544,6 +545,8 @@ def manage_saves_ui(file_data:list, max_saves=5, save_name="save*", save_ext="sa
                     return [1, new_slot]
                 else:
                     input(f"No empty save files! Delete a file to continue!")
+            elif option == -1:
+                return [-1, -1]
             # load/delete
             else:
                 # get data from file_data
@@ -553,18 +556,18 @@ def manage_saves_ui(file_data:list, max_saves=5, save_name="save*", save_ext="sa
                 list_data.append(None)
                 list_data.append("Delete file")
                 list_data.append("Back")
-                option = UI_list(list_data, " File select").display()
+                option = UI_list(list_data, " Level select", can_esc=True).display()
                 # load
-                if option < len(file_data):
+                if option != -1 and option < len(file_data):
                     return [0, file_data[option][0]]
                 # delete
                 elif option == len(file_data) + 1:
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False).display()
-                        if option != len(list_data) - 1:
-                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?").display()
+                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display()
+                        if option != -1 and option != len(list_data) - 1:
+                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display()
                             if sure == 1:
                                 remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                                 list_data.pop(option)
