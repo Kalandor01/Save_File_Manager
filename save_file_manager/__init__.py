@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.3.1'
+__version__ = '1.8.4'
 
 from numpy import random as npr
 
@@ -70,7 +70,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
 
 def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", is_file_encoded=True):
     """
-    Returns (encripted) data from all save files with the save file number.
+    Gets data from all save files with a file number, and returns it in a format that save managers can read.
     """
     file_data = []
     file_num = 0
@@ -582,7 +582,91 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
             return [1, 1]
 
 
-def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is_file_encoded=True):
+def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False):
+    """
+    Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
+    The new_save_function and the load_save_function run, when the user preforms these actions, and both WILL get the file number, that was refrenced as their first argument.\n
+    The get_data_function should return a list with all of the save file data, similar to the file_redaer function.\n
+    The first element of all function lists should allways be the function. All other elements will be treated as arguments for that function.
+    """
+    from os import remove
+
+    def new_save_pre(new_func):
+        new_slot = 1
+        for data in file_data:
+            if data[0] == new_slot:
+                new_slot += 1
+        if new_slot <= max_saves:
+            new_func[0](new_slot, *new_func[1:])
+        else:
+            input(f"No empty save files! Delete a file to continue!")
+
+    def load_or_delete(load_func):
+        while True:
+            # get data from file_data
+            file_data = get_data_function[0](*get_data_function[1:])
+            list_data = []
+            for data in file_data:
+                list_data.append(f"{data[0]}. {data[1]}")
+                list_data.append(None)
+            list_data.append("Delete file")
+            list_data.append("Back")
+            option = UI_list(list_data, " Level select", can_esc=True).display()
+            # load
+            if option != -1 and option / 2 < len(file_data):
+                load_func[0](file_data[int(option / 2)][0], *load_func[1:])
+            # delete
+            elif option / 2 == len(file_data):
+                list_data.pop(len(list_data) - 2)
+                delete_mode = True
+                while delete_mode and len(file_data) > 0:
+                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display()
+                    if option != -1 and option != len(list_data) - 1:
+                        option = int(option / 2)
+                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display()
+                        if sure == 1:
+                            remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
+                            list_data.pop(option)
+                            list_data.pop(option)
+                            file_data.pop(option)
+                    else:
+                        delete_mode = False
+                if len(file_data) == 0:
+                    input(f"\n No save files detected!")
+                    new_save_function[0](1, *new_save_function[1:])
+            else:
+                break
+
+    if get_data_function == None:
+        get_data_function = [file_reader, max_saves, False, save_name, save_ext]
+    file_data = get_data_function[0](*get_data_function[1:])
+
+    if len(file_data):
+        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display()
+        if option == -1:
+            return -1
+    else:
+        input(f"\n No save files detected!")
+        new_save_function[0](1, *new_save_function[1:])
+
+# def neww(num):
+#     input(f"NEW GAME!!! in {num}")
+# def loadd(num):
+#     input(f"LOADING SAVE {num}!!!")
+# def gettt():
+#     datas = file_reader()
+#     datas_merged = []
+#     for data in datas:
+#         lines = ""
+#         for line in data[1]:
+#             lines += line
+#         datas_merged.append([data[0], lines])
+#     return datas_merged
+
+# manage_saves_ui_2([neww], [loadd], [gettt])
+
+
+def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=False, is_file_encoded=True):
     # create files
     save = ["dude thing 42069", "áéűől4"]
     save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
@@ -629,8 +713,7 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=True, is
         elif status[0] == 0:
             input(f"LOADING SAVE {status[1]}!!!")
 
-
-# _test_run(5, "save*", "sav", True, True)
+# _test_run(5, "save*", "sav", False, True)
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
