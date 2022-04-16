@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.4'
+__version__ = '1.8.4.1'
 
 from numpy import random as npr
 
@@ -157,7 +157,8 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
 def get_key(mode=0):
     """
     Function for detecting a keypress (mainly arrow keys)\n
-    Returns a number depending on the key type (0-5), and -1 if msvcrt/getch was not found.\n
+    Returns a number depending on the key type (0-5).\n
+    Throws an error if msvcrt/getch was not found. (this module is windows only)\n
     Returned keys for numbers (0-5): [ESC][UP][DOWN][LEFT][RIGHT][ENTER]\n
     Depending on the mode, it ignores some keys:\n
     \t0: don't ignore
@@ -168,7 +169,7 @@ def get_key(mode=0):
         from msvcrt import getch
     except ModuleNotFoundError:
         input("\n\nmsvcrt MODULE NOT FOUND!\nTHIS MODULE IS WINDOWS ONLY!\n\n")
-        return -1
+        raise ModuleNotFoundError
     
     arrow = False
     while True:
@@ -513,6 +514,7 @@ class UI_list:
 # l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[_imput, _imput, l2_2, None])
 # l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, action_list=[_imput, _imput, l2_1, l2_0, None])
 # l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", action_list=[_imput, l1_0, l1_1, None])
+
 # l0.display()
 
 
@@ -592,6 +594,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
     from os import remove
 
     def new_save_pre(new_func):
+        file_data = get_data_function[0](*get_data_function[1:])
         new_slot = 1
         for data in file_data:
             if data[0] == new_slot:
@@ -636,11 +639,13 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                     new_save_function[0](1, *new_save_function[1:])
             else:
                 break
-
+    
+    # actual function
+    # get_fuction default
     if get_data_function == None:
         get_data_function = [file_reader, max_saves, False, save_name, save_ext]
     file_data = get_data_function[0](*get_data_function[1:])
-
+    # main
     if len(file_data):
         option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display()
         if option == -1:
@@ -649,24 +654,9 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
         input(f"\n No save files detected!")
         new_save_function[0](1, *new_save_function[1:])
 
-# def neww(num):
-#     input(f"NEW GAME!!! in {num}")
-# def loadd(num):
-#     input(f"LOADING SAVE {num}!!!")
-# def gettt():
-#     datas = file_reader()
-#     datas_merged = []
-#     for data in datas:
-#         lines = ""
-#         for line in data[1]:
-#             lines += line
-#         datas_merged.append([data[0], lines])
-#     return datas_merged
-
-# manage_saves_ui_2([neww], [loadd], [gettt])
 
 
-def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=False, is_file_encoded=True):
+def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", write_out=False, is_file_encoded=True, can_exit=True):
     # create files
     save = ["dude thing 42069", "áéűől4"]
     save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
@@ -689,34 +679,64 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=False, i
         f.close()
     
     # menu management
-    while True:
-        datas = file_reader(max_saves, write_out, save_name, save_ext, is_file_encoded)
-        datas_merged = []
-        for data in datas:
-            lines = ""
-            for line in data[1]:
-                lines += line
-            datas_merged.append([data[0], lines])
-        status = manage_saves_ui(datas_merged, max_saves, save_name, save_ext)
-        if status[0] == 1:
-            input(f"NEW GAME!!! in {status[1]}")
-            # INFINITE max saves
-            if len(datas) >= max_saves - 1:
-                max_saves += 1
-            if is_file_encoded:
-                encode_save(save_new, status[1], save_name, save_ext)
+    if not new_method:
+        while True:
+            datas = file_reader(max_saves, write_out, save_name, save_ext, is_file_encoded)
+            datas_merged = []
+            for data in datas:
+                lines = ""
+                for line in data[1]:
+                    lines += line
+                datas_merged.append([data[0], lines])
+            status = manage_saves_ui(datas_merged, max_saves, save_name, save_ext, can_exit)
+            if status[0] == -1:
+                break
+            elif status[0] == 1:
+                input(f"NEW GAME!!! in {status[1]}")
+                # INFINITE max saves
+                if len(datas) >= max_saves - 1:
+                    max_saves += 1
+                if is_file_encoded:
+                    encode_save(save_new, status[1], save_name, save_ext)
+                else:
+                    f = open(f'{save_name.replace("*", str(status[1]))}.{save_ext}', "w")
+                    for line in save_new:
+                        f.write(line + "\n")
+                    f.close()
             else:
-                f = open(f'{save_name.replace("*", str(status[1]))}.{save_ext}', "w")
-                for line in save_new:
-                    f.write(line + "\n")
-                f.close()
-        elif status[0] == 0:
-            input(f"LOADING SAVE {status[1]}!!!")
+                input(f"LOADING SAVE {status[1]}!!!")
+    else:
+        def neww(num, new_data):
+            input(f"NEW GAME!!! in {num}")
+            encode_save(new_data, num)
+            # INFINITE max saves ?
 
-# _test_run(5, "save*", "sav", False, True)
+        def loadd(num):
+            input(f"LOADING SAVE {num}!!!")
+
+        def gettt(max_saves_in, write_out_in, save_name_in, save_ext_in, is_file_encoded_in):
+            datas = file_reader(max_saves_in, write_out_in, save_name_in, save_ext_in, is_file_encoded_in)
+            datas_merged = []
+            for data in datas:
+                lines = ""
+                for line in data[1]:
+                    lines += line
+                datas_merged.append([data[0], lines])
+            return datas_merged
+
+        # menu management
+        while True:
+            status = manage_saves_ui_2([neww, save_new], [loadd], [gettt, max_saves, write_out, save_name, save_ext, is_file_encoded], max_saves, can_exit = can_exit)
+            if status == -1:
+                break
+
+# _test_run(True, 100, "save*", "sav", False, True)
+
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
+
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
+
 # elements = []
 # elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
 # elements.append(None)
@@ -724,7 +744,9 @@ def _test_run(max_saves=5, save_name="save*", save_ext="sav", write_out=False, i
 # elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
 # elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", "X", "O", " lol ", True, "$", True))
 # elements.append(Toggle(1, "toggle test ", post_value=" $"))
+
 # options_ui(elements, "test", ">", selected_icon_right="<")
+
 # for element in elements:
 #     if type(element) == Slider or type(element) == Choice or type(element) == Toggle:
 #         print(element.pre_text + str(element.value))
