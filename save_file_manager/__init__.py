@@ -3,9 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.4.1'
-
-from numpy import random as npr
+__version__ = '1.8.5'
 
 
 def _imput(ask="Num: "):
@@ -17,42 +15,54 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="sav"):
+def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
     """
     Creates a file that has been encoded, from a list of strings.
     """
-    from math import pi
+    from math import pi, sqrt
     from base64 import b64encode
+    from numpy import random as npr
 
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
-    r = npr.RandomState(int(save_num * pi * 3853))
+    r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
     encode_64 = r.randint(3, 10)
     for line in save_file_lines:
-        line_enc = str(line).encode("windows-1250")
+        # encoding into bytes
+        line_enc = b""
+        for line_char in line:
+            try:
+                line_enc += str(line_char).encode(encoding)
+            except UnicodeEncodeError:
+                line_enc += b"\x3f"
+        # encode to base64 x times
         for _ in range(encode_64):
             line_enc = b64encode(line_enc)
-        line_enc = line_enc.decode("windows-1250")
+        # back to text
+        line_enc = line_enc.decode(encoding)
+        # shuffling bytes
         line_bytes = bytearray(line_enc, "utf-8")
         line_bytes_enc = bytearray("", "utf-8")
         for byte in line_bytes:
             line_bytes_enc.append(byte + r.randint(1, 134))
+        # \n + write
         line_bytes_enc.append(10)
         f.write(bytes(line_bytes_enc))
     f.close()
 
 
-def decode_save(save_num=1, save_name="save*", save_ext="sav"):
+def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
     """
     Returns a list of strings, decoded fron the encoded file.
     """
-    from math import pi
+    from math import pi, sqrt
     from base64 import b64decode
+    from numpy import random as npr
 
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
     lines = f.readlines()
     f.close()
     lis = []
-    r = npr.RandomState(int(save_num * pi * 3853))
+    r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
     encode_64 = r.randint(3, 10)
     for bytes_enc in lines:
         line_bytes = bytearray("", "utf-8")
@@ -60,12 +70,24 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav"):
             if byte != 10:
                 line_bytes.append(byte - r.randint(1, 134))
         line_enc = line_bytes.decode("utf-8")
-        line_enc = line_enc.encode("windows-1250")
+        line_enc = line_enc.encode(encoding)
         for _ in range(encode_64):
             line_enc = b64decode(line_enc)
-        line = line_enc.decode("windows-1250")
+        line = line_enc.decode(encoding)
         lis.append(line)
     return lis
+
+# test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
+# test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{\\\"}<¤ß$ŁłÍ÷×¸¨"]
+# test_save = [input("text:\n")]
+# super edge case
+# test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
+# encode_save(test_save)
+# print()
+# decoded = decode_save()
+# for d_line in decoded:
+#     print(d_line)
+# print()
 
 
 def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", is_file_encoded=True):
@@ -219,18 +241,15 @@ class Slider:
 class Choice:
     """
     Object for the options_ui method\n
-    When used as input in the options_ui function, it draws a multiple choice seletion, with the choices_list list specifying the choice names.\n
+    When used as input in the options_ui function, it draws a multiple choice seletion, with the choice_list list specifying the choice names.\n
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][choice name][pre_value][value][post_value]
     """
-    def __init__(self, choices_list:list, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
-        for x in range(len(choices_list)):
-            choices_list[x] = str(choices_list[x])
-        self.choices_list = list(choices_list)
+    def __init__(self, choice_list:list|range, value=0, pre_text="", pre_value="", display_value=False, post_value="", multiline=False):
+        choice_list = [str(choice) for choice in choice_list]
+        self.choice_list = list(choice_list)
         self.pre_text = str(pre_text)
         self.value = int(value)
-        self.symbol = str(symbol)
-        self.symbol_empty = str(symbol_empty)
         self.pre_value = str(pre_value)
         self.display_value = bool(display_value)
         self.post_value = str(post_value)
@@ -302,13 +321,13 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                 # choice
                 if type(elements[x]) == Choice:
                     # current choice
-                    if elements[x].multiline and elements[x].choices_list[elements[x].value].find("\n") != -1:
+                    if elements[x].multiline and elements[x].choice_list[elements[x].value].find("\n") != -1:
                         if selected != x:
-                            print(elements[x].choices_list[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
+                            print(elements[x].choice_list[elements[x].value].replace("\n", f"{not_selected_icon_right}\n{not_selected_icon}"), end="")
                         else:
-                            print(elements[x].choices_list[elements[x].value].replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
+                            print(elements[x].choice_list[elements[x].value].replace("\n", f"{selected_icon_right}\n{selected_icon}"), end="")
                     else:
-                        print(elements[x].choices_list[elements[x].value], end="")
+                        print(elements[x].choice_list[elements[x].value], end="")
                 # toggle
                 if type(elements[x]) == Toggle:
                     # on/off
@@ -331,7 +350,7 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                         if type(elements[x]) == Slider:
                             print(elements[x].value, end="")
                         else:
-                            print(f"{elements[x].value}/{len(elements[x].choices_list)}", end="")
+                            print(f"{elements[x].value}/{len(elements[x].choice_list)}", end="")
                 # common end
                 # post value
                 if elements[x].multiline and elements[x].post_value.find("\n") != -1:
@@ -389,12 +408,12 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                 else:
                     if key == 4:
                         elements[selected].value += 1
-                        if elements[selected].value >= len(elements[selected].choices_list) - 1:
+                        if elements[selected].value >= len(elements[selected].choice_list):
                             elements[selected].value = 0
                     else:
                         elements[selected].value -= 1
                         if elements[selected].value < 0:
-                            elements[selected].value = len(elements[selected].choices_list) - 1
+                            elements[selected].value = len(elements[selected].choice_list) - 1
             # toggle
             elif key == 5:
                 elements[selected].value += 1
@@ -731,9 +750,6 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
                 break
 
 # _test_run(True, 100, "save*", "sav", False, True)
-
-# test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
-# test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{}<¤ß$ŁłÍ÷×¸¨"]
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
