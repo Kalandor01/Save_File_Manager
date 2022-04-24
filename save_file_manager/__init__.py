@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.5'
+__version__ = '1.8.5.1'
 
 
 def _imput(ask="Num: "):
@@ -25,7 +25,7 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
 
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    encode_64 = r.randint(3, 10)
+    encode_64 = r.randint(2, 5)
     for line in save_file_lines:
         # encoding into bytes
         line_enc = b""
@@ -43,7 +43,7 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
         line_bytes = bytearray(line_enc, "utf-8")
         line_bytes_enc = bytearray("", "utf-8")
         for byte in line_bytes:
-            line_bytes_enc.append(byte + r.randint(1, 134))
+            line_bytes_enc.append(byte + r.randint(-32, 134))
         # \n + write
         line_bytes_enc.append(10)
         f.write(bytes(line_bytes_enc))
@@ -63,12 +63,12 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     f.close()
     lis = []
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    encode_64 = r.randint(3, 10)
+    encode_64 = r.randint(2, 5)
     for bytes_enc in lines:
         line_bytes = bytearray("", "utf-8")
         for byte in bytes_enc:
             if byte != 10:
-                line_bytes.append(byte - r.randint(1, 134))
+                line_bytes.append(byte - r.randint(-32, 134))
         line_enc = line_bytes.decode("utf-8")
         line_enc = line_enc.encode(encoding)
         for _ in range(encode_64):
@@ -77,8 +77,12 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
         lis.append(line)
     return lis
 
+# byte 0A = 10 is bad
+# r.randint(1, 134)
+# base_64_test = b'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
-# test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/*-+,.-;>*?:_<>#&@{\\\"}<¤ß$ŁłÍ÷×¸¨"]
+# test_save = ["a", "\n\n\n", "a", "\n\n\n", "a"]
+# test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789áűúőéóüöí0123456789/*-+,.-;>*?:_<>#&@{\\\"}<¤ß$ŁłÍ÷×¸¨"]
 # test_save = [input("text:\n")]
 # super edge case
 # test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
