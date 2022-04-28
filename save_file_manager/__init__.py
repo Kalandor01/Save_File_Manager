@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.5.1'
+__version__ = '1.8.5.2'
 
 
 def _imput(ask="Num: "):
@@ -29,7 +29,7 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
     for line in save_file_lines:
         # encoding into bytes
         line_enc = b""
-        for line_char in line:
+        for line_char in str(line):
             try:
                 line_enc += str(line_char).encode(encoding)
             except UnicodeEncodeError:
