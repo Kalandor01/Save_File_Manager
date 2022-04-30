@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.5.2'
+__version__ = '1.8.5.3'
 
 
 def _imput(ask="Num: "):
@@ -282,7 +282,12 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
     Accepts mainly a list of objects (Slider, Choice and Toggle).\n
     if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.
     """
-    
+    # is toggle in list
+    no_toggle = True
+    for element in elements:
+        if type(element) == Toggle:
+            no_toggle = False
+            break
     selected = 0
     while type(elements[selected]) != Slider and type(elements[selected]) != Choice and type(elements[selected]) != Toggle:
         selected += 1
@@ -383,6 +388,8 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
             else:
                 while key == 5:
                     key = get_key()
+                    if key == 5 and no_toggle:
+                        key = 0
             # move selection
             if 1 <= key <= 2:
                 while True:
@@ -418,14 +425,15 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                         elements[selected].value -= 1
                         if elements[selected].value < 0:
                             elements[selected].value = len(elements[selected].choice_list) - 1
-            # toggle
+            # toggle (or exit)
             elif key == 5:
                 elements[selected].value += 1
                 elements[selected].value %= 2
 
 
 class UI_list:
-    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None):
+    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
+        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
         self.answer_list = list(answer_list)
         self.question = str(question)
         self.s_icon = str(selected_icon)
@@ -438,18 +446,21 @@ class UI_list:
             self.action_list = []
         else:
             self.action_list = list(action_list)
+        self.exclude_none = exclude_none
 
 
     def display(self):
         """
         Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
+        If exclude_none is true, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the action list for every None value in the answer list.\n
         if the answer is None the line will be blank and cannot be selected. \n
         Multiline makes the "cursor" draw at every line if the text is multiline.\n
         Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
         If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
-        If the function returns -1 the display function will instantly exit.\n
-        If it is a UI_list object, the object's display function will be automaticly called.
+        - If the function returns -1 the display function will instantly exit.\n
+        - If the function returns a list where the first element is -1 the display function will instantly return that list with the first element replaced by the selected element number of that UI_list object.\n
+        - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.
         """
         while True:
             selected = 0
@@ -498,6 +509,14 @@ class UI_list:
                         if self.answer_list[selected] != None:
                             break
             # menu actions
+            if self.exclude_none:
+                selected_f = selected
+                for x in range(len(self.answer_list)):
+                    if self.answer_list[x] == None:
+                        selected_f -= 1
+                    if x == selected:
+                        selected = selected_f
+                        break
             if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] != None:
                 # list
                 if type(self.action_list[selected]) == list and len(self.action_list[selected]) >= 2:
@@ -508,22 +527,28 @@ class UI_list:
                             di.update(elem)
                         else:
                             lis.append(elem)
-                    if lis[0](*lis[1:], **di) == -1:
+                    func_return = lis[0](*lis[1:], **di)
+                    if func_return == -1:
                         return selected
+                    elif type(func_return) == list and func_return[0] == -1:
+                        func_return[0] = selected
+                        return func_return
                 # normal function
                 elif callable(self.action_list[selected]):
-                    if self.action_list[selected]() == -1:
+                    func_return = self.action_list[selected]()
+                    if func_return == -1:
                         return selected
+                    elif type(func_return) == list and func_return[0] == -1:
+                        func_return[0] = selected
+                        return func_return
                 # ui
                 else:
-                    # lazy back button
+                    # display function or lazy back button
                     try:
-                        self.action_list[selected].display
-                    except AttributeError:
-                        print("Option is not a UI_list object!")
-                        return selected
-                    else:
                         self.action_list[selected].display()
+                    except AttributeError:
+                        # print("Option is not a UI_list object!")
+                        return selected
             else:
                 return selected
 
@@ -532,9 +557,9 @@ class UI_list:
 
 # l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, action_list=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [_imput, "nummm: "], None])
 # l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, action_list=[_imput, _imput, l3_0, None])
-# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, action_list=[_imput, _imput, None])
-# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, action_list=[_imput, _imput, None])
-# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[_imput, _imput, l2_2, None])
+# l2_1 = UI_list(["option 1", "option 2", "back"], "l2_1", can_esc=True, action_list=[_imput, _imput, 0])
+# l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, action_list=[_imput, _imput, 0])
+# l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[_imput, _imput, l2_2, 0])
 # l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, action_list=[_imput, _imput, l2_1, l2_0, None])
 # l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", action_list=[_imput, l1_0, l1_1, None])
 
@@ -762,7 +787,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
 # elements.append(None)
 # elements.append("2. test")
 # elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
-# elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", "X", "O", " lol ", True, "$", True))
+# elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
 # elements.append(Toggle(1, "toggle test ", post_value=" $"))
 
 # options_ui(elements, "test", ">", selected_icon_right="<")
