@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.3'
+__version__ = '1.8.6.3.1'
 
 
 def _imput(ask="Num: "):
@@ -82,17 +82,17 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # base_64_test = b'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["a", "\n\n\n", "a", "\n\n\n", "a"]
-test_save = ["gfgfggfg", "1234567890", "\n", "", "léláéűűéőűúűűűűűűűűű", "ffffffffffffg", "f"]
+# test_save = ["gfgfggfg", "1234567890", "\n", "", "léláéűűéőűúűűűűűűűűű", "ffffffffffffg", "f"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789áűúőéóüöí0123456789/*-+,.-;>*?:_<>#&@{\\\"}<¤ß$ŁłÍ÷×¸¨"]
 # test_save = [input("text:\n")]
 # super edge case
 # test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
-encode_save(test_save)
-print()
-decoded = decode_save()
-for d_line in decoded:
-    print(d_line)
-print()
+# encode_save(test_save)
+# print()
+# decoded = decode_save()
+# for d_line in decoded:
+#     print(d_line)
+# print()
 
 
 def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name=None, is_file_encoded=True):
