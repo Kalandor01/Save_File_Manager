@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.3.1'
+__version__ = '1.8.6.4'
 
 
 def _imput(ask="Num: "):
@@ -126,8 +126,9 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
                 try:
                     data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext)
                 except ValueError:
-                    print(f'Cannot read "{save_name.replace("*", str(file_num))}.{save_ext}"!')
-                    data = []
+                    if write_out:
+                        print(f'Cannot read "{save_name.replace("*", str(file_num))}.{save_ext}"!')
+                    data = -1
             else:
                 data = []
                 f = open(path.join(dir_name, f'{save_name.replace("*", str(file_num))}.{save_ext}'), "r")
@@ -136,11 +137,9 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
                 for line in lines:
                     data.append(line.replace("\n", ""))
         except FileNotFoundError:
-            print(f'"{save_name.replace("*", str(file_num))}.{save_ext}" not found!')
-            file_data.append([file_num, -1])
             if write_out:
                 print(f"Save File {file_num}:")
-                print("ERROR!")
+                print("Not found!")
                 print("\n")
         else:
             file_data.append([file_num, data])
