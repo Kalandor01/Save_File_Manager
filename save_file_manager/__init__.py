@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.1'
+__version__ = '1.8.6.2'
 
 
 def _imput(ask="Num: "):
@@ -121,7 +121,11 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
     for file_num in existing_files:
         try:
             if is_file_encoded:
-                data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext)
+                try:
+                    data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext)
+                except ValueError:
+                    print(f'Cannot read "{save_name.replace("*", str(file_num))}.{save_ext}"!')
+                    data = []
             else:
                 data = []
                 f = open(path.join(dir_name, f'{save_name.replace("*", str(file_num))}.{save_ext}'), "r")
