@@ -1,9 +1,9 @@
 """
 This module allows a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has a function for a displaying basic UI elements.\n
-Use 'save_name = os.path.dirname(os.path.abspath(__file__)) + "/save*"' as the save name to save files in the current directory instead of the default path.
+Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.5.3'
+__version__ = '1.8.6'
 
 
 def _imput(ask="Num: "):
@@ -94,21 +94,36 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # print()
 
 
-def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", is_file_encoded=True):
+def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name=None, is_file_encoded=True):
     """
-    Gets data from all save files with a file number, and returns it in a format that save managers can read.
+    Gets data from all save files with a file number, and returns it in a format that save managers can read.\n
+    -1 = infinite max saves
     """
+    from os import path, getcwd, listdir
+    from re import match
+
+    if dir_name == None:
+        dir_name = getcwd()
+
+    # get existing file numbers
+    file_names = listdir(dir_name)
+    existing_files = []
+    for name in file_names:
+        if path.isfile(path.join(dir_name, name)) and match("save\d+.sav", name):
+            file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
+            if file_number <= max_saves or max_saves < 0:
+                existing_files.append(file_number)
+    existing_files.sort()
+
     file_data = []
-    file_num = 0
     if write_out:
         print("\n")
-    while max_saves > file_num:
-        file_num += 1
+    for file_num in existing_files:
         try:
             f = open(f'{save_name.replace("*", str(file_num))}.{save_ext}', "r")
             f.close()
         except FileNotFoundError:
-            pass
+            print(f'"{save_name.replace("*", str(file_num))}.{save_ext}" not found!')
         else:
             if is_file_encoded:
                 data = decode_save(file_num, save_name, save_ext)
@@ -164,7 +179,7 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
                 for data in file_data:
                     if data[0] == new_slot:
                         new_slot += 1
-                if new_slot <= max_saves:
+                if new_slot <= max_saves or max_saves < 0:
                     return [1, new_slot]
                 else:
                     input(f"No empty save files! Delete a file to continue!")
@@ -591,7 +606,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                 for data in file_data:
                     if data[0] == new_slot:
                         new_slot += 1
-                if new_slot <= max_saves:
+                if new_slot <= max_saves or max_saves < 0:
                     return [1, new_slot]
                 else:
                     input(f"No empty save files! Delete a file to continue!")
@@ -647,7 +662,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
         for data in file_data:
             if data[0] == new_slot:
                 new_slot += 1
-        if new_slot <= max_saves:
+        if new_slot <= max_saves or max_saves < 0:
             new_func[0](new_slot, *new_func[1:])
         else:
             input(f"No empty save files! Delete a file to continue!")
@@ -729,7 +744,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
     # menu management
     if not new_method:
         while True:
-            datas = file_reader(max_saves, write_out, save_name, save_ext, is_file_encoded)
+            datas = file_reader(max_saves, write_out, save_name, save_ext, None, is_file_encoded)
             datas_merged = []
             for data in datas:
                 lines = ""
@@ -741,9 +756,6 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
                 break
             elif status[0] == 1:
                 input(f"NEW GAME!!! in {status[1]}")
-                # INFINITE max saves
-                if len(datas) >= max_saves - 1:
-                    max_saves += 1
                 if is_file_encoded:
                     encode_save(save_new, status[1], save_name, save_ext)
                 else:
@@ -763,7 +775,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
             input(f"LOADING SAVE {num}!!!")
 
         def gettt(max_saves_in, write_out_in, save_name_in, save_ext_in, is_file_encoded_in):
-            datas = file_reader(max_saves_in, write_out_in, save_name_in, save_ext_in, is_file_encoded_in)
+            datas = file_reader(max_saves_in, write_out_in, save_name_in, save_ext_in, None, is_file_encoded_in)
             datas_merged = []
             for data in datas:
                 lines = ""
@@ -778,7 +790,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
             if status == -1:
                 break
 
-# _test_run(True, 100, "save*", "sav", False, True)
+# _test_run(False, -1, "save*", "sav", False, True)
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
