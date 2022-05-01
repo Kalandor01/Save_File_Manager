@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.2'
+__version__ = '1.8.6.3'
 
 
 def _imput(ask="Num: "):
@@ -25,8 +25,8 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
 
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    encode_64 = r.randint(2, 5)
     for line in save_file_lines:
+        encode_64 = r.randint(2, 5)
         # encoding into bytes
         line_enc = b""
         for line_char in str(line):
@@ -63,8 +63,8 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     f.close()
     lis = []
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    encode_64 = r.randint(2, 5)
     for bytes_enc in lines:
+        encode_64 = r.randint(2, 5)
         line_bytes = bytearray("", "utf-8")
         for byte in bytes_enc:
             if byte != 10:
@@ -82,22 +82,24 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # base_64_test = b'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/='
 # test_save = ["test testtest 42096 éáőúűá", "line", "linelinesabnjvaqxcyvíbíxmywjefgsetiuruoúpőáűégfgk,v.mn.--m,1372864594"]
 # test_save = ["a", "\n\n\n", "a", "\n\n\n", "a"]
+test_save = ["gfgfggfg", "1234567890", "\n", "", "léláéűűéőűúűűűűűűűűű", "ffffffffffffg", "f"]
 # test_save = ["abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789áűúőéóüöí0123456789/*-+,.-;>*?:_<>#&@{\\\"}<¤ß$ŁłÍ÷×¸¨"]
 # test_save = [input("text:\n")]
 # super edge case
 # test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
-# encode_save(test_save)
-# print()
-# decoded = decode_save()
-# for d_line in decoded:
-#     print(d_line)
-# print()
+encode_save(test_save)
+print()
+decoded = decode_save()
+for d_line in decoded:
+    print(d_line)
+print()
 
 
 def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name=None, is_file_encoded=True):
     """
     Gets data from all save files with a file number, and returns it in a format that save managers can read.\n
-    -1 = infinite max saves
+    -1 = infinite max saves\n
+    If an encrypted file is corrupted, the data will be replaced with -1
     """
     from os import path, getcwd, listdir
     from re import match
@@ -135,6 +137,11 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
                     data.append(line.replace("\n", ""))
         except FileNotFoundError:
             print(f'"{save_name.replace("*", str(file_num))}.{save_ext}" not found!')
+            file_data.append([file_num, -1])
+            if write_out:
+                print(f"Save File {file_num}:")
+                print("ERROR!")
+                print("\n")
         else:
             file_data.append([file_num, data])
             if write_out:
