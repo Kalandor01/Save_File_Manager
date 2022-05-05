@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.4'
+__version__ = '1.8.6.5'
 
 
 def _imput(ask="Num: "):
@@ -95,7 +95,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # print()
 
 
-def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name=None, is_file_encoded=True):
+def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True):
     """
     Gets data from all save files with a file number, and returns it in a format that save managers can read.\n
     -1 = infinite max saves\n
