@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.6.5'
+__version__ = '1.8.7'
 
 
 def _imput(ask="Num: "):
@@ -149,6 +149,13 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
                 print("\n")
     return file_data
 
+def file_reader_s(save_name="save*", dir_name:str=None):
+    """
+    Short versoin of file_reader.\n
+    file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True)
+    """
+    file_reader(-1, False, save_name, "sav", dir_name, True)
+
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
     """
@@ -248,7 +255,7 @@ class Slider:
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
     """
-    def __init__(self, section:int|range=range(10), value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+    def __init__(self, section:int|range, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
         if type(section) == range:
             self.section = section
         elif type(section) == int:
@@ -454,24 +461,7 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                 elements[selected].value %= 2
 
 
-class UI_list:
-    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
-        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
-        self.answer_list = list(answer_list)
-        self.question = str(question)
-        self.s_icon = str(selected_icon)
-        self.icon = str(not_selected_icon)
-        self.s_icon_r = str(selected_icon_right)
-        self.icon_r = str(not_selected_icon_right)
-        self.multiline = bool(multiline)
-        self.can_esc = bool(can_esc)
-        if action_list == None:
-            self.action_list = []
-        else:
-            self.action_list = list(action_list)
-        self.exclude_none = exclude_none
-
-
+class _UI_list_parrent:
     def display(self):
         """
         Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
@@ -574,6 +564,44 @@ class UI_list:
                         return selected
             else:
                 return selected
+
+class UI_list(_UI_list_parrent):
+    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
+        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
+        self.answer_list = list(answer_list)
+        self.question = str(question)
+        self.s_icon = str(selected_icon)
+        self.icon = str(not_selected_icon)
+        self.s_icon_r = str(selected_icon_right)
+        self.icon_r = str(not_selected_icon_right)
+        self.multiline = bool(multiline)
+        self.can_esc = bool(can_esc)
+        if action_list == None:
+            self.action_list = []
+        else:
+            self.action_list = list(action_list)
+        self.exclude_none = exclude_none
+
+class UI_list_s(_UI_list_parrent):
+    """
+    Short versoin of UI_list.\n
+    __init__(..., selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", ...)
+    """
+    def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
+        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
+        self.answer_list = list(answer_list)
+        self.question = str(question)
+        self.s_icon = ">"
+        self.icon = " "
+        self.s_icon_r = ""
+        self.icon_r = ""
+        self.multiline = bool(multiline)
+        self.can_esc = bool(can_esc)
+        if action_list == None:
+            self.action_list = []
+        else:
+            self.action_list = list(action_list)
+        self.exclude_none = exclude_none
 
 # def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
 #     input(f"{a}, {b}, {c}, {d}, {e}, {f}")
