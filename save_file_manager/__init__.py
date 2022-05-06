@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.9'
+__version__ = '1.8.9.1'
 
 
 def _imput(ask="Num: "):
@@ -128,7 +128,7 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
         try:
             if is_file_encoded:
                 try:
-                    data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext)
+                    data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext, decode_until=decode_until)
                 except ValueError:
                     if write_out:
                         print(f'Cannot read "{save_name.replace("*", str(file_num))}.{save_ext}"!')
@@ -158,7 +158,7 @@ def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
     Short versoin of file_reader.\n
     file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until))
     """
-    file_reader(-1, False, save_name, "sav", dir_name, True, decode_until)
+    return file_reader(-1, False, save_name, "sav", dir_name, True, decode_until)
 
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
