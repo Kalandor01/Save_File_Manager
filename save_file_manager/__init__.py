@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.8'
+__version__ = '1.8.9'
 
 
 def _imput(ask="Num: "):
@@ -98,11 +98,12 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # print()
 
 
-def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True):
+def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1):
     """
     Gets data from all save files with a file number, and returns it in a format that save managers can read.\n
     -1 = infinite max saves\n
-    If an encrypted file is corrupted, the data will be replaced with -1
+    If an encrypted file is corrupted, the data will be replaced with -1\n
+    decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).
     """
     from os import path, getcwd, listdir
     from re import match
@@ -152,12 +153,12 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
                 print("\n")
     return file_data
 
-def file_reader_s(save_name="save*", dir_name:str=None):
+def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
     """
     Short versoin of file_reader.\n
-    file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True)
+    file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until))
     """
-    file_reader(-1, False, save_name, "sav", dir_name, True)
+    file_reader(-1, False, save_name, "sav", dir_name, True, decode_until)
 
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
