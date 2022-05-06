@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.7'
+__version__ = '1.8.8'
 
 
 def _imput(ask="Num: "):
@@ -50,9 +50,10 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
     f.close()
 
 
-def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
+def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", decode_until=-1):
     """
-    Returns a list of strings, decoded fron the encoded file.
+    Returns a list of strings, decoded fron the encoded file.\n
+    decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).
     """
     from math import pi, sqrt
     from base64 import b64decode
@@ -63,10 +64,12 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     f.close()
     lis = []
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    for bytes_enc in lines:
+    for x in range(len(lines)):
+        if decode_until > -1 and x >= decode_until:
+            break
         encode_64 = r.randint(2, 5)
         line_bytes = bytearray("", "utf-8")
-        for byte in bytes_enc:
+        for byte in lines[x]:
             if byte != 10:
                 line_bytes.append(byte - r.randint(-32, 134))
         line_enc = line_bytes.decode("utf-8")
