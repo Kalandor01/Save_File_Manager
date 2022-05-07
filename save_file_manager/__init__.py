@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.8.9.1'
+__version__ = '1.9'
 
 
 def _imput(ask="Num: "):
@@ -214,7 +214,7 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
     return [-1, option]
 
 
-def get_key(mode=0):
+def get_key(mode=0, key_map:list=None):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a number depending on the key type (0-5).\n
@@ -223,7 +223,10 @@ def get_key(mode=0):
     Depending on the mode, it ignores some keys:\n
     \t0: don't ignore
     \t1: ignore left/right
-    \t2: ignore up/down
+    \t2: ignore up/down\n
+    You can set custom keys keybinds by providing a key_map:\n
+    [[list of keys in order (the 2. value in the list signals that the key gives back two keys ("arrow" key))], ["arrow" key detector(s)]]
+    [[b"esc"][b"up", 1][b"down", 1][b"left", 1][b"right", 1][b"enter"], [b"arrow1", b"arrow2"]]
     """
     try:
         from msvcrt import getch
@@ -232,24 +235,45 @@ def get_key(mode=0):
         raise ModuleNotFoundError
     
     arrow = False
-    while True:
-        key = getch()
-        # print(key)
-        if key == b"\x1b":
-            return 0
-        if arrow and mode != 2 and key == b"H":
-            return 1
-        elif arrow and mode != 2 and key == b"P":
-            return 2
-        elif arrow and mode != 1 and key == b"K":
-            return 3
-        elif arrow and mode != 1 and key == b"M":
-            return 4
-        elif key == b"\r":
-            return 5
-        arrow = False
-        if key == b"\xe0" or key == b"\x00":
-            arrow = True
+    if key_map == None:
+        while True:
+            key = getch()
+            # print(key)
+            if key == b"\x1b":
+                return 0
+            if arrow and mode != 2 and key == b"H":
+                return 1
+            elif arrow and mode != 2 and key == b"P":
+                return 2
+            elif arrow and mode != 1 and key == b"K":
+                return 3
+            elif arrow and mode != 1 and key == b"M":
+                return 4
+            elif key == b"\r":
+                return 5
+            arrow = False
+            if key == b"\xe0" or key == b"\x00":
+                arrow = True
+    else:
+        # key_map = [[[b"\x1b"], [b"H", 1], [b"P", 1], [b"K", 1], [b"M", 1], [b"\r"]], [b"\xe0", b"\x00"]]
+        while True:
+            key = getch()
+            # print(key)
+            if ((len(key_map[0][0]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and key == key_map[0][0][0]:
+                return 0
+            elif ((len(key_map[0][1]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 2 and key == key_map[0][1][0]:
+                return 1
+            elif ((len(key_map[0][2]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 2 and key == key_map[0][2][0]:
+                return 2
+            elif ((len(key_map[0][3]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 1 and key == key_map[0][3][0]:
+                return 3
+            elif ((len(key_map[0][4]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 1 and key == key_map[0][4][0]:
+                return 4
+            elif ((len(key_map[0][5]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and key == key_map[0][5][0]:
+                return 5
+            arrow = False
+            if len(key_map) != 1 and key_map[1].count(key) > 0:
+                arrow = True
 
 
 class Slider:
