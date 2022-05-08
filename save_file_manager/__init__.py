@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.9.1'
+__version__ = '1.9.2'
 
 
 def _imput(ask="Num: "):
@@ -336,7 +336,7 @@ class Toggle:
         self.multiline = bool(multiline)
 
 
-def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right=""):
+def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", key_mapping=None):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice and Toggle).\n
@@ -444,10 +444,10 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
             # get key
             key = 5
             if type(elements[selected]) == Toggle:
-                key = get_key(1)
+                key = get_key(1, key_mapping)
             else:
                 while key == 5:
-                    key = get_key()
+                    key = get_key(0, key_mapping)
                     if key == 5 and no_toggle:
                         key = 0
             # move selection
@@ -492,7 +492,7 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
 
 
 class _UI_list_parrent:
-    def display(self):
+    def display(self, key_mapping=None):
         """
         Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -533,11 +533,11 @@ class _UI_list_parrent:
                     else:
                         print()
                 # answer select
-                key = get_key(1)
+                key = get_key(1, key_mapping)
                 if self.can_esc and key == 0:
                     return -1
                 while key == 0:
-                    key = get_key(1)
+                    key = get_key(1, key_mapping)
                 # move selection
                 if key != 5:
                     while True:
