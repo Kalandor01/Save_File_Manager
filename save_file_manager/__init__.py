@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.9'
+__version__ = '1.9.1'
 
 
 def _imput(ask="Num: "):
@@ -15,7 +15,7 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
+def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
     """
     Creates a file that has been encoded, from a list of strings.
     """
@@ -25,6 +25,8 @@ def encode_save(save_file_lines:list, save_num=1, save_name="save*", save_ext="s
 
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
+    if type(save_file_lines) == str:
+        save_file_lines = [save_file_lines]
     for line in save_file_lines:
         encode_64 = r.randint(2, 5)
         # encoding into bytes
@@ -261,15 +263,15 @@ def get_key(mode=0, key_map:list=None):
             # print(key)
             if ((len(key_map[0][0]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and key == key_map[0][0][0]:
                 return 0
-            elif ((len(key_map[0][1]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 2 and key == key_map[0][1][0]:
+            elif ((len(key_map[0][1]) == 1 and not arrow) or (len(key_map[0][1]) > 1 and arrow)) and mode != 2 and key == key_map[0][1][0]:
                 return 1
-            elif ((len(key_map[0][2]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 2 and key == key_map[0][2][0]:
+            elif ((len(key_map[0][2]) == 1 and not arrow) or (len(key_map[0][2]) > 1 and arrow)) and mode != 2 and key == key_map[0][2][0]:
                 return 2
-            elif ((len(key_map[0][3]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 1 and key == key_map[0][3][0]:
+            elif ((len(key_map[0][3]) == 1 and not arrow) or (len(key_map[0][3]) > 1 and arrow)) and mode != 1 and key == key_map[0][3][0]:
                 return 3
-            elif ((len(key_map[0][4]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and mode != 1 and key == key_map[0][4][0]:
+            elif ((len(key_map[0][4]) == 1 and not arrow) or (len(key_map[0][4]) > 1 and arrow)) and mode != 1 and key == key_map[0][4][0]:
                 return 4
-            elif ((len(key_map[0][5]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and key == key_map[0][5][0]:
+            elif ((len(key_map[0][5]) == 1 and not arrow) or (len(key_map[0][5]) > 1 and arrow)) and key == key_map[0][5][0]:
                 return 5
             arrow = False
             if len(key_map) != 1 and key_map[1].count(key) > 0:
