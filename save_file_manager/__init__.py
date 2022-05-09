@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.9.3'
+__version__ = '1.9.3.1'
 
 
 def _imput(ask="Num: "):
@@ -123,7 +123,6 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
     version = int(decode_line(f.readline(), rr))
     seed_num = float(decode_line(f.readline(), rr))
-    print(version, seed_num)
     f.close()
     # decode
     f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
