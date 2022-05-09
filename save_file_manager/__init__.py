@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.9.2'
+__version__ = '1.9.3'
 
 
 def _imput(ask="Num: "):
@@ -15,19 +15,22 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250"):
+# 1:normal, 2:timer, 3:timer+time, 4:location+time
+# select: lines 1-2, not line 3?!
+def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", version=1):
     """
-    Creates a file that has been encoded, from a list of strings.
+    Creates a file that has been encoded, from a (list of) string(s).\n
+    version numbers:
+    - 1: normal: weak
+    - 2: secure: stronger
+    - 3: super-secure: strogest (only works, if opened on the same location, with the same name)
+    - 4: stupid secure: v3 but encription "expires" on the next day
     """
     from math import pi, sqrt
     from base64 import b64encode
     from numpy import random as npr
 
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
-    r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    if type(save_file_lines) == str:
-        save_file_lines = [save_file_lines]
-    for line in save_file_lines:
+    def encode_line(line, r:npr.RandomState):
         encode_64 = r.randint(2, 5)
         # encoding into bytes
         line_enc = b""
@@ -48,7 +51,49 @@ def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ex
             line_bytes_enc.append(byte + r.randint(-32, 134))
         # \n + write
         line_bytes_enc.append(10)
-        f.write(bytes(line_bytes_enc))
+        return line_bytes_enc
+
+    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
+    rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
+    if type(save_file_lines) == str:
+        save_file_lines = [save_file_lines]
+    # v1
+    if version == 1:
+        f.write(bytes(encode_line(1, rr)))
+        f.write(bytes(encode_line(-1, rr)))
+        rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
+        for line in save_file_lines:
+            encoded_line = encode_line(line, rr)
+            f.write(bytes(encoded_line))
+    else:
+        from datetime import datetime
+        f.write(bytes(encode_line(version, rr)))
+        # v2
+        if version == 2:
+            seed_num = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**17.42 * (0.587 + save_num * pi))
+        # v3-4
+        elif version == 3 or version == 4:
+            import os.path
+            path = os.path.dirname(os.path.abspath(__file__)) + f'{save_name.replace("*", str(save_num))}.{save_ext}'
+            b_path = bytes(path, "utf-8")
+            num_p = 1
+            for by in b_path:
+                num_p *= int(by)
+                num_p = int(str(num_p).replace("0", ""))
+            t_now = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**1.42 * (0.587 + save_num * pi))
+            seed_num = float(str(num_p * t_now).replace("0", "").replace("e+", "")) * 15439813
+        else:
+            seed_num = sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi))
+        encoded_line = encode_line(seed_num, rr)
+        # v4
+        if version == 4:
+            n = datetime.now()
+            seed_num *= (n.year + n.month + n.day)
+        seed = npr.RandomState(int(seed_num % 2**32))
+        f.write(bytes(encoded_line))
+        for line in save_file_lines:
+            encoded_line = encode_line(line, seed)
+            f.write(bytes(encoded_line))
     f.close()
 
 
@@ -61,25 +106,41 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     from base64 import b64decode
     from numpy import random as npr
 
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
-    lines = f.readlines()
-    f.close()
-    lis = []
-    r = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    for x in range(len(lines)):
-        if decode_until > -1 and x >= decode_until:
-            break
+    def decode_line(line:list, r:npr.RandomState):
         encode_64 = r.randint(2, 5)
         line_bytes = bytearray("", "utf-8")
-        for byte in lines[x]:
+        for byte in line:
             if byte != 10:
                 line_bytes.append(byte - r.randint(-32, 134))
         line_enc = line_bytes.decode("utf-8")
         line_enc = line_enc.encode(encoding)
         for _ in range(encode_64):
             line_enc = b64decode(line_enc)
-        line = line_enc.decode(encoding)
-        lis.append(line)
+        return line_enc.decode(encoding)
+
+    # get version
+    rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
+    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
+    version = int(decode_line(f.readline(), rr))
+    seed_num = float(decode_line(f.readline(), rr))
+    print(version, seed_num)
+    f.close()
+    # decode
+    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
+    lines = f.readlines()
+    f.close()
+    lis = []
+    if version == 4:
+        from datetime import datetime
+        n = datetime.now()
+        seed_num *= (n.year + n.month + n.day)
+    elif version < 2 or version > 4:
+        seed_num = sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi))
+    seed = npr.RandomState(int(seed_num % 2**32))
+    for x in range(2, len(lines)):
+        if decode_until > -1 and x >= decode_until:
+            break
+        lis.append(decode_line(lines[x], seed))    
     return lis
 
 # byte 0A = 10 is bad
@@ -92,12 +153,13 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # test_save = [input("text:\n")]
 # super edge case
 # test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
-# encode_save(test_save)
+# encode_save(test_save, 1, version=3)
 # print()
 # decoded = decode_save()
 # for d_line in decoded:
 #     print(d_line)
 # print()
+# print(decode_save())
 
 
 def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1):
