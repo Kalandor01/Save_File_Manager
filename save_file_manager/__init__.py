@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.9.3.1'
+__version__ = '1.10'
 
 
 def _imput(ask="Num: "):
@@ -288,8 +288,8 @@ def get_key(mode=0, key_map:list=None):
     \t1: ignore left/right
     \t2: ignore up/down\n
     You can set custom keys keybinds by providing a key_map:\n
-    [[list of keys in order (the 2. value in the list signals that the key gives back two keys ("arrow" key))], ["arrow" key detector(s)]]
-    [[b"esc"][b"up", 1][b"down", 1][b"left", 1][b"right", 1][b"enter"], [b"arrow1", b"arrow2"]]
+    [[list of keys in order (the 2. value in the list signals that the key gives back two keys (arrow keys))], [double key detector(s)]]\n
+    key_map = [[[b"\\x1b"], [b"H", 1], [b"P", 1], [b"K", 1], [b"M", 1], [b"\\r"]], [b"\\xe0", b"\\x00"]]
     """
     try:
         from msvcrt import getch
@@ -321,6 +321,10 @@ def get_key(mode=0, key_map:list=None):
         # key_map = [[[b"\x1b"], [b"H", 1], [b"P", 1], [b"K", 1], [b"M", 1], [b"\r"]], [b"\xe0", b"\x00"]]
         while True:
             key = getch()
+            arrow = False
+            if len(key_map) != 1 and key in key_map[1]:
+                arrow = True
+                key = getch()
             # print(key)
             if ((len(key_map[0][0]) == 1 and not arrow) or (len(key_map[0][0]) > 1 and arrow)) and key == key_map[0][0][0]:
                 return 0
@@ -334,9 +338,6 @@ def get_key(mode=0, key_map:list=None):
                 return 4
             elif ((len(key_map[0][5]) == 1 and not arrow) or (len(key_map[0][5]) > 1 and arrow)) and key == key_map[0][5][0]:
                 return 5
-            arrow = False
-            if len(key_map) != 1 and key_map[1].count(key) > 0:
-                arrow = True
 
 
 class Slider:
@@ -404,10 +405,10 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
     if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.
     """
     # is toggle in list
-    no_toggle = True
+    no_enter = True
     for element in elements:
-        if type(element) == Toggle:
-            no_toggle = False
+        if type(element) == Toggle or type(element) == UI_list or type(element) == UI_list_s:
+            no_enter = False
             break
     selected = 0
     while type(elements[selected]) != Slider and type(elements[selected]) != Choice and type(elements[selected]) != Toggle:
@@ -424,6 +425,7 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
         for x in range(len(elements)):
             if elements[x] == None:
                 print()
+            # UI elements
             elif type(elements[x]) == Slider or type(elements[x]) == Choice or type(elements[x]) == Toggle:
                 # common
                 # icon
@@ -495,6 +497,22 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                     print(not_selected_icon_right)
                 else:
                     print(selected_icon_right)
+            # UI_list
+            elif type(elements[x]) == UI_list or type(elements[x]) == UI_list_s:
+                # render
+                if elements[x].answer_list[0] != None:
+                    if selected != x:
+                        if elements[x].multiline:
+                            print(elements[x].icon + elements[x].answer_list[0].replace("\n", f"{elements[x].icon_r}\n{elements[x].icon}") + elements[x].icon_r)
+                        else:
+                            print(elements[x].icon + elements[x].answer_list[0] + elements[x].icon_r)
+                    else:
+                        if elements[x].multiline:
+                            print(elements[x].s_icon + elements[x].answer_list[0].replace("\n", f"{elements[x].s_icon_r}\n{elements[x].s_icon}") + elements[x].s_icon_r)
+                        else:
+                            print(elements[x].s_icon + elements[x].answer_list[0] + elements[x].s_icon_r)
+                else:
+                    print()
             else:
                 print(elements[x])
         # move selection/change value
@@ -504,12 +522,12 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
             actual_move = True
             # get key
             key = 5
-            if type(elements[selected]) == Toggle:
+            if type(elements[selected]) == Toggle or type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
                 key = get_key(1, key_mapping)
             else:
                 while key == 5:
                     key = get_key(0, key_mapping)
-                    if key == 5 and no_toggle:
+                    if key == 5 and no_enter:
                         key = 0
             # move selection
             if 1 <= key <= 2:
@@ -522,7 +540,7 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                         selected -= 1
                         if selected < 0:
                             selected = len(elements) - 1
-                    if type(elements[selected]) == Slider or type(elements[selected]) == Choice or type(elements[selected]) == Toggle:
+                    if type(elements[selected]) == Slider or type(elements[selected]) == Choice or type(elements[selected]) == Toggle or type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
                         break
             # move slider/choice
             elif 3 <= key <= 4:
@@ -546,13 +564,80 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
                         elements[selected].value -= 1
                         if elements[selected].value < 0:
                             elements[selected].value = len(elements[selected].choice_list) - 1
-            # toggle (or exit)
+            # toggle
             elif key == 5:
-                elements[selected].value += 1
-                elements[selected].value %= 2
+                if type(elements[selected]) == Toggle:
+                    elements[selected].value += 1
+                    elements[selected].value %= 2
+                # UI_list
+                elif type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
+                    # menu actions
+                    if elements[selected].exclude_none:
+                        selected_f = selected
+                        if elements[selected].answer_list[0] == None:
+                            selected_f -= 1
+                        if y == selected:
+                            selected = selected_f
+                    if elements[selected].action_list != [] and 0 < len(elements[selected].action_list) and elements[selected].action_list[0] != None:
+                        # list
+                        if type(elements[selected].action_list[0]) == list and len(elements[selected].action_list[0]) >= 2:
+                            lis = []
+                            di = dict()
+                            for elem in elements[selected].action_list[0]:
+                                if type(elem) == dict:
+                                    di.update(elem)
+                                else:
+                                    lis.append(elem)
+                            if elements[selected].modify_list:
+                                func_return = lis[0]([elements[selected].answer_list, elements[selected].action_list], *lis[1:], **di)
+                            else:
+                                func_return = lis[0](*lis[1:], **di)
+                            if func_return == -1:
+                                return selected
+                            elif type(func_return) == list and func_return[0] == -1:
+                                func_return[0] = selected
+                                return func_return
+                        # normal function
+                        elif callable(elements[selected].action_list[0]):
+                            if elements[selected].modify_list:
+                                func_return = elements[selected].action_list[0]([elements[selected].answer_list, elements[selected].action_list])
+                            else:
+                                func_return = elements[selected].action_list[0]()
+                            if func_return == -1:
+                                return selected
+                            elif type(func_return) == list and func_return[0] == -1:
+                                func_return[0] = selected
+                                return func_return
+                        # ui
+                        else:
+                            # display function or lazy back button
+                            try:
+                                elements[selected].action_list[selected].display(key_mapping=key_mapping)
+                            except AttributeError:
+                                # print("Option is not a UI_list object!")
+                                return selected
+                    else:
+                        return selected
 
 
-class _UI_list_parrent:
+class UI_list:
+    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
+        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
+        self.answer_list = list(answer_list)
+        self.question = str(question)
+        self.s_icon = str(selected_icon)
+        self.icon = str(not_selected_icon)
+        self.s_icon_r = str(selected_icon_right)
+        self.icon_r = str(not_selected_icon_right)
+        self.multiline = bool(multiline)
+        self.can_esc = bool(can_esc)
+        if action_list == None:
+            self.action_list = []
+        else:
+            self.action_list = list(action_list)
+        self.exclude_none = exclude_none
+        self.modify_list = bool(modify_list)
+
     def display(self, key_mapping=None):
         """
         Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
@@ -564,7 +649,8 @@ class _UI_list_parrent:
         If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
         - If the function returns -1 the display function will instantly exit.\n
         - If the function returns a list where the first element is -1 the display function will instantly return that list with the first element replaced by the selected element number of that UI_list object.\n
-        - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.
+        - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.\n
+        - If modify_list is True, any function (that is not a UI_list object) that is in the action_list will get a list containing the answer_list and the action list as it's first argument (and can modify it) when the function is called.\n
         """
         while True:
             selected = 0
@@ -631,7 +717,10 @@ class _UI_list_parrent:
                             di.update(elem)
                         else:
                             lis.append(elem)
-                    func_return = lis[0](*lis[1:], **di)
+                    if self.modify_list:
+                        func_return = lis[0]([self.answer_list, self.action_list], *lis[1:], **di)
+                    else:
+                        func_return = lis[0](*lis[1:], **di)
                     if func_return == -1:
                         return selected
                     elif type(func_return) == list and func_return[0] == -1:
@@ -639,7 +728,10 @@ class _UI_list_parrent:
                         return func_return
                 # normal function
                 elif callable(self.action_list[selected]):
-                    func_return = self.action_list[selected]()
+                    if self.modify_list:
+                        func_return = self.action_list[selected]([self.answer_list, self.action_list])
+                    else:
+                        func_return = self.action_list[selected]()
                     if func_return == -1:
                         return selected
                     elif type(func_return) == list and func_return[0] == -1:
@@ -649,36 +741,20 @@ class _UI_list_parrent:
                 else:
                     # display function or lazy back button
                     try:
-                        self.action_list[selected].display()
+                        self.action_list[selected].display(key_mapping=key_mapping)
                     except AttributeError:
                         # print("Option is not a UI_list object!")
                         return selected
             else:
                 return selected
 
-class UI_list(_UI_list_parrent):
-    def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
-        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
-        self.answer_list = list(answer_list)
-        self.question = str(question)
-        self.s_icon = str(selected_icon)
-        self.icon = str(not_selected_icon)
-        self.s_icon_r = str(selected_icon_right)
-        self.icon_r = str(not_selected_icon_right)
-        self.multiline = bool(multiline)
-        self.can_esc = bool(can_esc)
-        if action_list == None:
-            self.action_list = []
-        else:
-            self.action_list = list(action_list)
-        self.exclude_none = exclude_none
 
-class UI_list_s(_UI_list_parrent):
+class UI_list_s(UI_list):
     """
     Short versoin of UI_list.\n
     __init__(..., selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", ...)
     """
-    def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, action_list:list=None, exclude_none=False):
+    def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
         answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
         self.answer_list = list(answer_list)
         self.question = str(question)
@@ -693,9 +769,14 @@ class UI_list_s(_UI_list_parrent):
         else:
             self.action_list = list(action_list)
         self.exclude_none = exclude_none
+        self.modify_list = modify_list
 
 # def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
 #     input(f"{a}, {b}, {c}, {d}, {e}, {f}")
+
+# def mod(li:list):
+#     li[0].pop(-1)
+#     li[1].pop(-1)
 
 # l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, action_list=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [_imput, "nummm: "], None])
 # l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, action_list=[_imput, _imput, l3_0, None])
@@ -703,12 +784,12 @@ class UI_list_s(_UI_list_parrent):
 # l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, action_list=[_imput, _imput, 0])
 # l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[_imput, _imput, l2_2, 0])
 # l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, action_list=[_imput, _imput, l2_1, l2_0, None])
-# l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", action_list=[_imput, l1_0, l1_1, None])
+# l0 = UI_list(["function", "l1_0", "l1_1", "Exit"], "Main menu", action_list=[mod, l1_0, l1_1, None], modify_list=True)
 
 # l0.display()
 
 
-def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False):
+def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:list=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -724,7 +805,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
         if len(file_data):
             if in_main_menu:
                 in_main_menu = False
-                option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc=can_exit).display()
+                option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc=can_exit).display(key_mapping=key_mapping)
             else:
                 option = 1
             # new file
@@ -748,7 +829,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                 list_data.append(None)
                 list_data.append("Delete file")
                 list_data.append("Back")
-                option = UI_list(list_data, " Level select", can_esc=True).display()
+                option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping=key_mapping)
                 # load
                 if option != -1 and option < len(file_data):
                     return [0, file_data[option][0]]
@@ -757,9 +838,9 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display()
+                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True, key_mapping=key_mapping)
                         if option != -1 and option != len(list_data) - 1:
-                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display()
+                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping=key_mapping)
                             if sure == 1:
                                 remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                                 list_data.pop(option)
@@ -774,7 +855,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
             return [1, 1]
 
 
-def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False):
+def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:str=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     The new_save_function and the load_save_function run, when the user preforms these actions, and both WILL get the file number, that was refrenced as their first argument.\n
@@ -804,7 +885,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 list_data.append(None)
             list_data.append("Delete file")
             list_data.append("Back")
-            option = UI_list(list_data, " Level select", can_esc=True).display()
+            option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping=key_mapping)
             # load
             if option != -1 and option / 2 < len(file_data):
                 load_func[0](file_data[int(option / 2)][0], *load_func[1:])
@@ -813,10 +894,10 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 list_data.pop(len(list_data) - 2)
                 delete_mode = True
                 while delete_mode and len(file_data) > 0:
-                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display()
+                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping=key_mapping)
                     if option != -1 and option != len(list_data) - 1:
                         option = int(option / 2)
-                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display()
+                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping=key_mapping)
                         if sure == 1:
                             remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                             list_data.pop(option)
@@ -837,7 +918,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
     file_data = get_data_function[0](*get_data_function[1:])
     # main
     if len(file_data):
-        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display()
+        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display(key_mapping=key_mapping)
         if option == -1:
             return -1
     else:
@@ -921,16 +1002,20 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
-# elements = []
-# elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
-# elements.append(None)
-# elements.append("2. test")
-# elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
-# elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
-# elements.append(Toggle(1, "toggle test ", post_value=" $"))
+elements = []
+elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
+elements.append(None)
+elements.append("2. test")
+elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
+elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
+elements.append(Toggle(1, "toggle test ", post_value=" $"))
+elements.append(UI_list_s(["one"]))
+elements.append(UI_list_s(["two"]))
+elements.append(None)
+elements.append(UI_list_s(["three"]))
 
-# options_ui(elements, "test", ">", selected_icon_right="<")
+print(options_ui(elements, "test", ">", selected_icon_right="<"))
 
-# for element in elements:
-#     if type(element) == Slider or type(element) == Choice or type(element) == Toggle:
-#         print(element.pre_text + str(element.value))
+for element in elements:
+    if type(element) == Slider or type(element) == Choice or type(element) == Toggle:
+        print(element.pre_text + str(element.value))
