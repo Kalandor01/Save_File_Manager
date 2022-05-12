@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.10.1'
+__version__ = '1.10.2'
 
 
 def _imput(ask="Num: "):
@@ -137,7 +137,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
         seed_num = sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi))
     seed = npr.RandomState(int(seed_num % 2**32))
     for x in range(2, len(lines)):
-        if decode_until > -1 and x >= decode_until:
+        if decode_until > -1 and x >= decode_until + 2:
             break
         lis.append(decode_line(lines[x], seed))    
     return lis
@@ -218,7 +218,7 @@ def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav",
 
 def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
     """
-    Short versoin of file_reader.\n
+    Short version of file_reader.\n
     file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until))
     """
     return file_reader(-1, False, save_name, "sav", dir_name, True, decode_until)
@@ -751,7 +751,7 @@ class UI_list:
 
 class UI_list_s(UI_list):
     """
-    Short versoin of UI_list.\n
+    Short version of UI_list.\n
     __init__(..., selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", ...)
     """
     def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
