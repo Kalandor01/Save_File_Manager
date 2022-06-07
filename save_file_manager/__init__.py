@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = '1.10.2'
+__version__ = '1.10.3'
 
 
 def _imput(ask="Num: "):
@@ -621,6 +621,21 @@ def options_ui(elements:list, title:str=None, selected_icon=">", not_selected_ic
 
 
 class UI_list:
+    """
+    From the display function:\n
+    Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
+    Gives back a number from 0-n acording to the size of the list that was passed in.\n
+    If exclude_none is true, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the action list for every None value in the answer list.\n
+    if the answer is None the line will be blank and cannot be selected. \n
+    Multiline makes the "cursor" draw at every line if the text is multiline.\n
+    Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
+    If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
+    - If the function returns -1 the display function will instantly exit.\n
+    - If the function returns a list where the first element is -1 the display function will instantly return that list with the first element replaced by the selected element number of that UI_list object.\n
+    - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.\n
+    - If modify_list is True, any function (that is not a UI_list object) that is in the action_list will get a list containing the answer_list and the action list as it's first argument (and can modify it) when the function is called.\n
+    """
+    
     def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
         answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
         self.answer_list = list(answer_list)
