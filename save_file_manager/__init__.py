@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.10.5"
+__version__ = "1.10.5.0.1"
 
 
 def _imput(ask="Num: "):
@@ -15,8 +15,6 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-# 1:normal, 2:timer, 3:timer+time, 4:location+time
-# select: lines 1-2, not line 3?!
 def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", version=1):
     """
     Creates a file that has been encoded, from a (list of) string(s).\n
