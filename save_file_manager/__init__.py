@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.10.6"
+__version__ = "1.11"
 
 
 def _imput(ask="Num: "):
@@ -15,9 +15,10 @@ def _imput(ask="Num: "):
         except ValueError: print("Not number!")
 
 
-def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", version=1):
+def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", version=2):
     """
-    Creates a file that has been encoded, from a (list of) string(s).\n
+    Creates a file that has been encoded, from a string or a list of strings.\n
+    If `save_name` contains a "*", when creating the file, it will be replaced in the name by the `save_num`.\n
     version numbers:
     - 1: normal: weak
     - 2: secure: stronger
@@ -98,7 +99,8 @@ def encode_save(save_file_lines:list|str, save_num=1, save_name="save*", save_ex
 def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", decode_until=-1):
     """
     Returns a list of strings, decoded fron the encoded file.\n
-    decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).
+    If `save_name` contains a "*", when opening the file, it will be replaced in the name by the `save_num`.\n
+    `decode_until` controlls how many lines the function should decode (strarting from the beggining, with 1).
     """
     from math import pi, sqrt
     from base64 import b64decode
@@ -159,68 +161,94 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 # print(decode_save())
 
 
-def file_reader(max_saves=5, write_out=False, save_name="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1):
+def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1, save_num:int=None):
     """
-    Gets data from all save files with a file number, and returns it in a format that save managers can read.\n
-    -1 = infinite max saves\n
+    Gets data from all save files in a folder, and returns them in a format that save managers can read.\n
+    Returns an array, where each element is an array, where the 1. element is the `save_num` and the 2. is a list of decripted lines from the file\n
+    `max_saves`=-1 -> infinite max saves\n
     If an encrypted file is corrupted, the data will be replaced with -1\n
-    decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).
+    decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).\n
+    If `save_name` is `None` and `save_num` is NOT `None` then the function will search for all files with the `save_ext` extension and tries to decode them with the `save_num` as the "seed".
     """
     from os import path, getcwd, listdir
-    from re import match
 
     if dir_name == None:
         dir_name = getcwd()
 
+    # setup vars
+    if save_name != None:
+        if save_name.find("*") != -1:
+            save_name_post = save_name.split("*")[-1] + "." + save_ext
+        else:
+            save_name_post = "." + save_ext
+    else:
+        save_count = 0
     # get existing file numbers
     file_names = listdir(dir_name)
     existing_files = []
     for name in file_names:
-        if path.isfile(path.join(dir_name, name)) and match("save\d+.sav", name):
-            try: file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
-            except ValueError: continue
-            if file_number <= max_saves or max_saves < 0:
-                existing_files.append(file_number)
+        # get files by naming pattern
+        if save_name != None:
+            if path.isfile(path.join(dir_name, name)) and name.startswith(save_name.split("*")[0]) and name.endswith(save_name_post):
+                try: file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
+                except ValueError: continue
+                if file_number <= max_saves or max_saves < 0:
+                    existing_files.append(file_number)
+        # get files by extension only
+        elif save_num != None:
+            if path.isfile(path.join(dir_name, name)) and name.endswith("." + save_ext):
+                    existing_files.append(name)
+                    if max_saves >= 0:
+                        save_count += 1
+                        if save_count >= max_saves:
+                            break
+        else:
+            raise Exception('"save_name" and "save_num" can\'t both be None at the same time')
     existing_files.sort()
 
+    # get file datas
     file_data = []
-    if write_out:
-        print("\n")
-    for file_num in existing_files:
+    for file in existing_files:
         try:
             if is_file_encoded:
                 try:
-                    data = decode_save(file_num, path.join(dir_name, save_name.replace("*", str(file_num))), save_ext, decode_until=decode_until)
+                    if save_name != None:
+                        data = decode_save(file, path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until=decode_until)
+                    else:
+                        data = decode_save(save_num, path.join(dir_name, file.replace("." + save_ext, "")), save_ext, decode_until=decode_until)
                 except ValueError:
-                    if write_out:
-                        print(f'Cannot read "{save_name.replace("*", str(file_num))}.{save_ext}"!')
                     data = -1
             else:
                 data = []
-                f = open(path.join(dir_name, f'{save_name.replace("*", str(file_num))}.{save_ext}'), "r")
+                if save_name != None:
+                    f = open(path.join(dir_name, f'{save_name.replace("*", str(file))}.{save_ext}'), "r")
+                else:
+                    f = open(path.join(dir_name, name), "r")
                 lines = f.readlines()
                 f.close()
                 for line in lines:
                     data.append(line.replace("\n", ""))
-        except FileNotFoundError:
-            if write_out:
-                print(f"Save File {file_num}:")
-                print("Not found!")
-                print("\n")
+        except FileNotFoundError: pass
         else:
-            file_data.append([file_num, data])
-            if write_out:
-                print(f"Save File {file_num}:")
-                print(data)
-                print("\n")
+            if save_name != None:
+                file_data.append([file, data])
+            else:
+                file_data.append([save_num, data])
     return file_data
 
 def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
     """
-    Short version of file_reader.\n
-    file_reader(max_saves=-1, write_out=False, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until))
+    Short version of `file_reader`.\n
+    file_reader(max_saves=-1, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until, save_num=None)
     """
-    return file_reader(-1, False, save_name, "sav", dir_name, True, decode_until)
+    return file_reader(max_saves=-1, save_name=save_name, save_ext="sav", dir_name=dir_name, is_file_encoded=True, decode_until=decode_until, save_num=None)
+
+def file_reader_blank(save_num, dir_name:str=None, decode_until=-1):
+    """
+    Short version of `file_reader`, but for save files with different names, but same `save_num`s.\n
+    file_reader(max_saves=-1, save_name=None, save_ext="sav", dir_name, is_file_encoded=True, decode_until, save_num)
+    """
+    return file_reader(max_saves=-1, save_name=None, save_ext="sav", dir_name=dir_name, is_file_encoded=True, decode_until=decode_until, save_num=save_num)
 
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
@@ -341,18 +369,18 @@ def get_key(mode=0, key_map:list=None):
 
 class UI_list:
     """
-    From the display function:\n
-    Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
+    From the `display` function:\n
+    Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
     Gives back a number from 0-n acording to the size of the list that was passed in.\n
-    If exclude_none is true, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the action list for every None value in the answer list.\n
+    If `exclude_none` is `True`, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the `action_list` for every `None` value in the `answer_list`.\n
     if the answer is None the line will be blank and cannot be selected. \n
-    Multiline makes the "cursor" draw at every line if the text is multiline.\n
-    Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
-    If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
-    - If the function returns -1 the display function will instantly exit.\n
-    - If the function returns a list where the first element is -1 the display function will instantly return that list with the first element replaced by the selected element number of that UI_list object.\n
-    - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.\n
-    - If modify_list is True, any function (that is not a UI_list object) that is in the action_list will get a list containing the answer_list and the action list as it's first argument (and can modify it) when the function is called.\n
+    `multiline` makes the "cursor" draw at every line if the text is multiline.\n
+    `can_esc` allows the user to press esc to exit the menu. In this case the function returns -1.\n
+    If the `action_list` is not empty, each element coresponds to an element in the `answer_list`, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
+    - If the function returns -1 the `display` function will instantly exit.\n
+    - If the function returns a list where the first element is -1 the `display` function will instantly return that list with the first element replaced by the selected element number of that `UI_list` object.\n
+    - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
+    - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
     """
     
     def __init__(self, answer_list:list, question:str=None, selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
@@ -374,17 +402,17 @@ class UI_list:
 
     def display(self, key_mapping=None):
         """
-        Prints the question and then the list of answers that the user can cycle between with the arrow keys and select with enter.\n
+        Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
-        If exclude_none is true, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the action list for every None value in the answer list.\n
+        If `exclude_none` is `True`, the selected option will not see non-selectable elements as part of the list. This also makes it so you don't have to put a placeholder value in the `action_list` for every `None` value in the `answer_list`.\n
         if the answer is None the line will be blank and cannot be selected. \n
-        Multiline makes the "cursor" draw at every line if the text is multiline.\n
-        Can_esc allows the user to press esc to exit the menu. In this case the function returns -1.\n
-        If the action_list is not empty, each element coresponds to an element in the answer_list, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
-        - If the function returns -1 the display function will instantly exit.\n
-        - If the function returns a list where the first element is -1 the display function will instantly return that list with the first element replaced by the selected element number of that UI_list object.\n
-        - If it is a UI_list object, the object's display function will be automaticly called, allowing for nested menus.\n
-        - If modify_list is True, any function (that is not a UI_list object) that is in the action_list will get a list containing the answer_list and the action list as it's first argument (and can modify it) when the function is called.\n
+        `multiline` makes the "cursor" draw at every line if the text is multiline.\n
+        `can_esc` allows the user to press esc to exit the menu. In this case the function returns -1.\n
+        If the `action_list` is not empty, each element coresponds to an element in the `answer_list`, and if the value is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function.\n
+        - If the function returns -1 the `display` function will instantly exit.\n
+        - If the function returns a list where the first element is -1 the `display` function will instantly return that list with the first element replaced by the selected element number of that `UI_list` object.\n
+        - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
+        - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
         """
         while True:
             selected = 0
@@ -483,7 +511,7 @@ class UI_list:
 
 class UI_list_s(UI_list):
     """
-    Short version of UI_list.\n
+    Short version of `UI_list`.\n
     __init__(..., selected_icon=">", not_selected_icon=" ", selected_icon_right="", not_selected_icon_right="", ...)
     """
     def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, action_list:list=None, exclude_none=False, modify_list=False):
@@ -822,7 +850,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                 list_data.append(None)
                 list_data.append("Delete file")
                 list_data.append("Back")
-                option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping=key_mapping)
+                option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping)
                 # load
                 if option != -1 and option < len(file_data):
                     return [0, file_data[option][0]]
@@ -831,9 +859,9 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True, key_mapping=key_mapping)
+                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping)
                         if option != -1 and option != len(list_data) - 1:
-                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping=key_mapping)
+                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
                             if sure == 1:
                                 remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                                 list_data.pop(option)
@@ -878,7 +906,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 list_data.append(None)
             list_data.append("Delete file")
             list_data.append("Back")
-            option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping=key_mapping)
+            option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping)
             # load
             if option != -1 and option / 2 < len(file_data):
                 load_func[0](file_data[int(option / 2)][0], *load_func[1:])
@@ -887,10 +915,10 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 list_data.pop(len(list_data) - 2)
                 delete_mode = True
                 while delete_mode and len(file_data) > 0:
-                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping=key_mapping)
+                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping)
                     if option != -1 and option != len(list_data) - 1:
                         option = int(option / 2)
-                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping=key_mapping)
+                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
                         if sure == 1:
                             remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                             list_data.pop(option)
@@ -907,11 +935,11 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
     # actual function
     # get_fuction default
     if get_data_function == None:
-        get_data_function = [file_reader, max_saves, False, save_name, save_ext]
+        get_data_function = [file_reader, max_saves, save_name, save_ext]
     file_data = get_data_function[0](*get_data_function[1:])
     # main
     if len(file_data):
-        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display(key_mapping=key_mapping)
+        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display(key_mapping)
         if option == -1:
             return -1
     else:
@@ -920,7 +948,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
 
 
 
-def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", write_out=False, is_file_encoded=True, can_exit=True):
+def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", is_file_encoded=True, can_exit=True):
     # create files
     save = ["dude thing 42069", "áéűől4"]
     save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
@@ -945,7 +973,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
     # menu management
     if not new_method:
         while True:
-            datas = file_reader(max_saves, write_out, save_name, save_ext, None, is_file_encoded)
+            datas = file_reader(max_saves, save_name, save_ext, None, is_file_encoded)
             datas_merged = []
             for data in datas:
                 lines = ""
@@ -975,8 +1003,8 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
         def loadd(num):
             input(f"LOADING SAVE {num}!!!")
 
-        def gettt(max_saves_in, write_out_in, save_name_in, save_ext_in, is_file_encoded_in):
-            datas = file_reader(max_saves_in, write_out_in, save_name_in, save_ext_in, None, is_file_encoded_in)
+        def gettt(max_saves_in, save_name_in, save_ext_in, is_file_encoded_in):
+            datas = file_reader(max_saves_in, save_name_in, save_ext_in, None, is_file_encoded_in)
             datas_merged = []
             for data in datas:
                 lines = ""
@@ -987,11 +1015,11 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", w
 
         # menu management
         while True:
-            status = manage_saves_ui_2([neww, save_new], [loadd], [gettt, max_saves, write_out, save_name, save_ext, is_file_encoded], max_saves, can_exit = can_exit)
+            status = manage_saves_ui_2([neww, save_new], [loadd], [gettt, max_saves, save_name, save_ext, is_file_encoded], max_saves, can_exit = can_exit)
             if status == -1:
                 break
 
-# _test_run(False, -1, "save*", "sav", False, True)
+# _test_run(False, -1, "save*", "sav", True, True)
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
