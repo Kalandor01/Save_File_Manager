@@ -230,7 +230,10 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                     data.append(line.replace("\n", ""))
         except FileNotFoundError: pass
         else:
-            file_data.append([file, data])
+            if save_name != None:
+                file_data.append([file, data])
+            else:
+                file_data.append([file.replace("." + save_ext, ""), data])
     return file_data
 
 def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
