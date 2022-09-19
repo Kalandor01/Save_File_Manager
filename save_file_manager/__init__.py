@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.11"
+__version__ = "1.11.1"
 
 
 def _imput(ask="Num: "):
@@ -164,7 +164,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1, save_num:int=None):
     """
     Gets data from all save files in a folder, and returns them in a format that save managers can read.\n
-    Returns an array, where each element is an array, where the 1. element is the `save_num` and the 2. is a list of decripted lines from the file\n
+    Returns an array, where each element is an array, where the 1. element is the `save_num` or `save_name` (depending on witch one is not given) and the 2. is a list of decripted lines from the file.\n
     `max_saves`=-1 -> infinite max saves\n
     If an encrypted file is corrupted, the data will be replaced with -1\n
     decode_until controlls how many lines the function should decode (strarting from the beggining, with 1).\n
@@ -230,10 +230,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                     data.append(line.replace("\n", ""))
         except FileNotFoundError: pass
         else:
-            if save_name != None:
-                file_data.append([file, data])
-            else:
-                file_data.append([save_num, data])
+            file_data.append([file, data])
     return file_data
 
 def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
