@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.12.0.0.1"
+__version__ = "1.12.1"
 
 from save_file_manager.file_reader import file_reader, file_reader_s, file_reader_blank
 from save_file_manager.file_conversion import encode_save, decode_save

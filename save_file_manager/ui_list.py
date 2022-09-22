@@ -145,7 +145,7 @@ class UI_list:
 class UI_list_s(UI_list):
     """
     Short version of `UI_list`.\n
-    __init__(answer_list, question, cursor_icon=None, multiline=False, can_esc, action_list=None, exclude_nones, modify_list=False)
+    __init__(answer_list, question, cursor_icon=None, multiline, can_esc, action_list=None, exclude_nones, modify_list=False)
     """
-    def __init__(self, answer_list:list, question:str=None, can_esc=False, exclude_nones=False):
-        super().__init__(answer_list, question, None, False, can_esc, None, exclude_nones, False)
+    def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, exclude_nones=False):
+        super().__init__(answer_list, question, None, multiline, can_esc, None, exclude_nones, False)
