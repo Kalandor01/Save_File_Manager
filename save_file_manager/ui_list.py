@@ -1,5 +1,5 @@
-from cursor import Cursor_icon
-from utils import get_key
+from save_file_manager.cursor import Cursor_icon
+from save_file_manager.utils import get_key
 
 class UI_list:
     """

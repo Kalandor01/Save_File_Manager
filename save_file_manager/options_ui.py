@@ -1,6 +1,6 @@
-from cursor import Cursor_icon
-from ui_list import UI_list, UI_list_s
-from utils import get_key
+from save_file_manager.cursor import Cursor_icon
+from save_file_manager.ui_list import UI_list, UI_list_s
+from save_file_manager.utils import get_key
 
 
 class Base_UI:

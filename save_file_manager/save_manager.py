@@ -1,6 +1,6 @@
-from ui_list import UI_list
-from file_reader import file_reader
-from utils import _imput
+from save_file_manager.ui_list import UI_list
+from save_file_manager.file_reader import file_reader
+from save_file_manager.utils import _imput
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
     """
