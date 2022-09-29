@@ -5,13 +5,13 @@ Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory nam
 """
 __version__ = "1.12.2"
 
-from file_reader import file_reader, file_reader_s, file_reader_blank
-from file_conversion import encode_save, decode_save
-from cursor import Cursor_icon
-from ui_list import UI_list, UI_list_s
-from options_ui import Choice, Slider, Toggle, options_ui
-from save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
-from utils import get_key, _imput
+from save_file_manager.file_reader import file_reader, file_reader_s, file_reader_blank
+from save_file_manager.file_conversion import encode_save, decode_save
+from save_file_manager.cursor import Cursor_icon
+from save_file_manager.ui_list import UI_list, UI_list_s
+from save_file_manager.options_ui import Choice, Slider, Toggle, options_ui
+from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
+from save_file_manager.utils import get_key, _imput
 
 # byte 0A = 10 is bad
 # r.randint(1, 134)
