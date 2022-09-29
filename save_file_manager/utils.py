@@ -1,5 +1,5 @@
 
-def get_key(mode=0, key_map:list=None):
+def get_key(mode=0, key_map:list[list]=None):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a number depending on the key type (0-5).\n

@@ -1,4 +1,4 @@
-from save_file_manager.file_conversion import decode_save
+from file_conversion import decode_save
 
 def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1, save_num:int=None):
     """

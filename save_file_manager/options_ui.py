@@ -1,6 +1,6 @@
-from save_file_manager.cursor import Cursor_icon
-from save_file_manager.ui_list import UI_list, UI_list_s
-from save_file_manager.utils import get_key
+from cursor import Cursor_icon
+from ui_list import UI_list, UI_list_s
+from utils import get_key
 
 
 class Base_UI:
@@ -15,6 +15,62 @@ class Base_UI:
         self.display_value:bool = bool(display_value)
         self.post_value:str = str(post_value)
         self.multiline:bool = bool(multiline)
+    
+    
+    def __make_text(self, selected:bool, cursor_icon:Cursor_icon=None):
+        txt = ""
+        # icon groups
+        s_icons = f"{cursor_icon.s_icon_r}\n{cursor_icon.s_icon}"
+        icons = f"{cursor_icon.icon_r}\n{cursor_icon.icon}"
+        # common
+        # icon
+        txt += (cursor_icon.s_icon if selected else cursor_icon.icon)
+        # pre text
+        if self.multiline and self.pre_text.find("\n") != -1:
+            txt += self.pre_text.replace("\n", (s_icons if selected else icons))
+        else:
+            txt += self.pre_text
+        # current value display
+        # slider
+        if type(self) == Slider:
+            # bar
+            for y in self.section:
+                txt += (self.symbol_empty if y >= self.value else self.symbol)
+        # choice
+        if type(self) == Choice:
+            # current choice
+            if self.multiline and self.choice_list[self.value].find("\n") != -1:
+                txt += self.choice_list[self.value].replace("\n", (s_icons if selected else icons))
+            else:
+                txt += self.choice_list[self.value]
+        # toggle
+        if type(self) == Toggle:
+            # on/off
+            txt += (self.symbol_off if self.value == 0 else self.symbol)
+        # pre value
+        if self.multiline and self.pre_value.find("\n") != -1:
+            txt += self.pre_value.replace("\n", (s_icons if selected else icons))
+        else:
+            txt += self.pre_value
+        # value
+        if self.display_value:
+            if type(self) == Slider:
+                txt += str(self.value)
+            elif type(self) == Choice:
+                txt += f"{self.value}/{len(self.choice_list)}"
+        # common end
+        # post value
+        if self.multiline and self.post_value.find("\n") != -1:
+            txt += self.post_value.replace("\n", (s_icons if selected else icons))
+        else:
+            txt += self.post_value
+        # icon right
+        txt += (cursor_icon.s_icon_r if selected else cursor_icon.icon_r) + "\n"
+        return txt
+        
+    
+    def __handle_action(self, selected:int, key_mapping:list[list]=None):
+        pass
 
 
 class Slider(Base_UI):
@@ -97,6 +153,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                 txt += "\n"
             # UI elements
             elif type(element) == Slider or type(element) == Choice or type(element) == Toggle:
+                # txt += element.__make_text(selected == 0, curr_icon)
                 # common
                 # icon
                 txt += (cursor_icon.s_icon if selected == x else cursor_icon.icon)
@@ -145,6 +202,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                 txt += (cursor_icon.s_icon_r if selected == x else cursor_icon.icon_r) + "\n"
             # UI_list
             elif type(element) == UI_list or type(element) == UI_list_s:
+                # txt += element.__make_text(selected)
                 # render
                 if element.answer_list[0] != None:
                     if selected == x:
@@ -153,10 +211,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                     else:
                         curr_icon = element.cursor_icon.icon
                         curr_icon_r = element.cursor_icon.icon_r
-                    if element.multiline and element.answer_list[0].find("\n") != -1:
-                        txt += curr_icon + element.answer_list[0].replace("\n", f"{curr_icon_r}\n{curr_icon}") + curr_icon_r + "\n"
-                    else:
-                        txt += curr_icon + element.answer_list[0] + curr_icon_r + "\n"
+                    txt += curr_icon + (element.answer_list[0].replace("\n", f"{curr_icon_r}\n{curr_icon}") if element.multiline else element.answer_list[0]) + f"{curr_icon_r}\n"
                 else:
                     txt += "\n"
             else:

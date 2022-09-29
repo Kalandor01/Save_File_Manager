@@ -3,15 +3,15 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.12.1"
+__version__ = "1.12.2"
 
-from save_file_manager.file_reader import file_reader, file_reader_s, file_reader_blank
-from save_file_manager.file_conversion import encode_save, decode_save
-from save_file_manager.cursor import Cursor_icon
-from save_file_manager.ui_list import UI_list, UI_list_s
-from save_file_manager.options_ui import Choice, Slider, Toggle, options_ui
-from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
-from save_file_manager.utils import get_key, _imput
+from file_reader import file_reader, file_reader_s, file_reader_blank
+from file_conversion import encode_save, decode_save
+from cursor import Cursor_icon
+from ui_list import UI_list, UI_list_s
+from options_ui import Choice, Slider, Toggle, options_ui
+from save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
+from utils import get_key, _imput
 
 # byte 0A = 10 is bad
 # r.randint(1, 134)
@@ -42,6 +42,7 @@ from save_file_manager.utils import get_key, _imput
 #     li[0].pop(-1)
 #     if len(li[0]) == 0:
 #         return -1
+
 
 # l3_0 = UI_list(["option 1", "option 2", "back"], "l3_0", can_esc=True, action_list=[[over, 15, "gfg", UI_list, {"d":"d"}, {"f":59}], [input, "nummm: "], None])
 # l2_0 = UI_list(["option 1", "option 2", "l3_0", "back"], "l2_0", can_esc=True, action_list=[_imput, _imput, l3_0, None])
@@ -129,19 +130,19 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
-# elements = []
-# elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
-# elements.append(None)
-# elements.append("2. test")
-# elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
-# elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
-# elements.append(Toggle(1, "toggle test ", post_value=" $"))
-# elements.append(UI_list_s(["one"]))
-# elements.append(UI_list_s(["two"]))
-# elements.append(None)
-# elements.append(UI_list_s(["three"]))
+elements = []
+elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
+elements.append(None)
+elements.append("2. test")
+elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
+elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
+elements.append(Toggle(1, "toggle test ", post_value=" $"))
+elements.append(UI_list_s(["one"]))
+elements.append(UI_list_s(["two"]))
+elements.append(None)
+elements.append(UI_list_s(["three"]))
 
-# print(options_ui(elements, "test", Cursor_icon(">", "<")))
+print(options_ui(elements, "test", Cursor_icon(">", "<")))
 
 # for element in elements:
 #     if type(element) == Slider or type(element) == Choice or type(element) == Toggle:

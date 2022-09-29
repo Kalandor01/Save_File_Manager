@@ -1,5 +1,6 @@
-from save_file_manager.cursor import Cursor_icon
-from save_file_manager.utils import get_key
+from typing import Any
+from cursor import Cursor_icon
+from utils import get_key
 
 class UI_list:
     """
@@ -33,7 +34,111 @@ class UI_list:
         self.exclude_nones = exclude_nones
         self.modify_list = bool(modify_list)
 
-    def display(self, key_mapping=None):
+
+    def __make_text(self, selected:int, cursor_icon:Cursor_icon=None):
+        """Returns the text that represents the UI of this object (-question)."""
+        if cursor_icon == None:
+            cursor_icon = self.cursor_icon
+        txt = ""
+        for x in range(len(self.answer_list)):
+            if self.answer_list[x] != None:
+                if selected == x:
+                    curr_icon = cursor_icon.s_icon
+                    curr_icon_r = cursor_icon.s_icon_r
+                else:
+                    curr_icon = cursor_icon.icon
+                    curr_icon_r = cursor_icon.icon_r
+                txt += curr_icon + (self.answer_list[x].replace("\n", f"{curr_icon_r}\n{curr_icon}") if self.multiline else self.answer_list[x]) + f"{curr_icon_r}\n"
+            else:
+                txt += "\n"
+        return txt
+    
+    
+    def __convert_selected(self, selected:int):
+        """Converts the selected answer number to the actual number depending on if `exclude_nones` is true."""
+        if self.exclude_nones:
+            selected_f = selected
+            for x in range(len(self.answer_list)):
+                if self.answer_list[x] == None:
+                    selected_f -= 1
+                if x == selected:
+                    selected = selected_f
+                    break
+        return selected
+    
+    
+    def __move_selection(self, key:int, selected:int):
+        """Moves the selection depending on the input, in a way, where the selection can't land on an empty line."""
+        if key != 5:
+            while True:
+                if key == 2:
+                    selected += 1
+                    if selected > len(self.answer_list) - 1:
+                        selected = 0
+                else:
+                    selected -= 1
+                    if selected < 0:
+                        selected = len(self.answer_list) - 1
+                if self.answer_list[selected] != None:
+                    break
+        return selected
+
+    
+    def __handle_action(self, selected:int, key_mapping:list[list]=None) -> (int|Any):
+        """Handles what to retuen for the selected answer."""
+        if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] != None:
+            # list
+            if type(self.action_list[selected]) == list and len(self.action_list[selected]) >= 2:
+                lis = []
+                di = dict()
+                for elem in self.action_list[selected]:
+                    if type(elem) == dict:
+                        di.update(elem)
+                    else:
+                        lis.append(elem)
+                if self.modify_list:
+                    func_return = lis[0]([self.answer_list, self.action_list], *lis[1:], **di)
+                else:
+                    func_return = lis[0](*lis[1:], **di)
+                if func_return == -1:
+                    return selected
+                elif type(func_return) == list and func_return[0] == -1:
+                    func_return[0] = selected
+                    return func_return
+            # normal function
+            elif callable(self.action_list[selected]):
+                if self.modify_list:
+                    func_return = self.action_list[selected]([self.answer_list, self.action_list])
+                else:
+                    func_return = self.action_list[selected]()
+                if func_return == -1:
+                    return selected
+                elif type(func_return) == list and func_return[0] == -1:
+                    func_return[0] = selected
+                    return func_return
+            # ui
+            else:
+                # display function or lazy back button
+                try:
+                    self.action_list[selected].display(key_mapping=key_mapping)
+                except AttributeError:
+                    # print("Option is not a UI_list object!")
+                    return selected
+        else:
+            return selected
+        
+        
+    def __setup_selected(self):
+        """Returns a selected until it's not on an empty space."""
+        selected = 0
+        while self.answer_list[selected] == None:
+            selected += 1
+            if selected > len(self.answer_list) - 1:
+                selected = 0
+        return selected
+    
+
+    def display(self, key_mapping:list[list]=None):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -48,11 +153,7 @@ class UI_list:
         - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
         """
         while True:
-            selected = 0
-            while self.answer_list[selected] == None:
-                selected += 1
-                if selected > len(self.answer_list) - 1:
-                    selected = 0
+            selected = self.__setup_selected()
             key = 0
             while key != 5:
                 # render
@@ -60,17 +161,7 @@ class UI_list:
                 txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
                 if self.question != None:
                     txt += self.question + "\n\n"
-                for x in range(len(self.answer_list)):
-                    if self.answer_list[x] != None:
-                        if selected == x:
-                            curr_icon = self.cursor_icon.s_icon
-                            curr_icon_r = self.cursor_icon.s_icon_r
-                        else:
-                            curr_icon = self.cursor_icon.icon
-                            curr_icon_r = self.cursor_icon.icon_r
-                        txt += curr_icon + (self.answer_list[x].replace("\n", f"{curr_icon_r}\n{curr_icon}") if self.multiline else self.answer_list[x]) + f"{curr_icon_r}\n"
-                    else:
-                        txt += "\n"
+                txt += self.__make_text(selected)
                 print(txt)
                 # answer select
                 key = get_key(1, key_mapping)
@@ -78,68 +169,12 @@ class UI_list:
                     return -1
                 while key == 0:
                     key = get_key(1, key_mapping)
-                # move selection
-                if key != 5:
-                    while True:
-                        if key == 2:
-                            selected += 1
-                            if selected > len(self.answer_list) - 1:
-                                selected = 0
-                        else:
-                            selected -= 1
-                            if selected < 0:
-                                selected = len(self.answer_list) - 1
-                        if self.answer_list[selected] != None:
-                            break
+                selected = self.__move_selection(key, selected)
             # menu actions
-            if self.exclude_nones:
-                selected_f = selected
-                for x in range(len(self.answer_list)):
-                    if self.answer_list[x] == None:
-                        selected_f -= 1
-                    if x == selected:
-                        selected = selected_f
-                        break
-            if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] != None:
-                # list
-                if type(self.action_list[selected]) == list and len(self.action_list[selected]) >= 2:
-                    lis = []
-                    di = dict()
-                    for elem in self.action_list[selected]:
-                        if type(elem) == dict:
-                            di.update(elem)
-                        else:
-                            lis.append(elem)
-                    if self.modify_list:
-                        func_return = lis[0]([self.answer_list, self.action_list], *lis[1:], **di)
-                    else:
-                        func_return = lis[0](*lis[1:], **di)
-                    if func_return == -1:
-                        return selected
-                    elif type(func_return) == list and func_return[0] == -1:
-                        func_return[0] = selected
-                        return func_return
-                # normal function
-                elif callable(self.action_list[selected]):
-                    if self.modify_list:
-                        func_return = self.action_list[selected]([self.answer_list, self.action_list])
-                    else:
-                        func_return = self.action_list[selected]()
-                    if func_return == -1:
-                        return selected
-                    elif type(func_return) == list and func_return[0] == -1:
-                        func_return[0] = selected
-                        return func_return
-                # ui
-                else:
-                    # display function or lazy back button
-                    try:
-                        self.action_list[selected].display(key_mapping=key_mapping)
-                    except AttributeError:
-                        # print("Option is not a UI_list object!")
-                        return selected
-            else:
-                return selected
+            selected = self.__convert_selected(selected)
+            action = self.__handle_action(selected, key_mapping)
+            if action != None:
+                return action
 
 
 class UI_list_s(UI_list):
