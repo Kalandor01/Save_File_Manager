@@ -3,15 +3,26 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.12.2.2"
+__version__ = "1.13"
 
-from save_file_manager.file_reader import file_reader, file_reader_s, file_reader_blank
-from save_file_manager.file_conversion import encode_save, decode_save
-from save_file_manager.cursor import Cursor_icon
-from save_file_manager.ui_list import UI_list, UI_list_s
-from save_file_manager.options_ui import Choice, Slider, Toggle, options_ui
-from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
-from save_file_manager.utils import get_key, _imput
+
+if __name__ == "__main__":
+    from file_reader import FileReaderArgsError, file_reader, file_reader_s, file_reader_blank
+    from file_conversion import encode_save, decode_save
+    from cursor import Cursor_icon
+    from ui_list import UI_list, UI_list_s
+    from options_ui import Base_UI, Choice, Slider, Toggle, UINoSelectablesError, options_ui
+    from save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
+    from utils import get_key, Get_key_modes, Keys, imput
+else:
+    from save_file_manager.file_reader import FileReaderArgsError, file_reader, file_reader_s, file_reader_blank
+    from save_file_manager.file_conversion import encode_save, decode_save
+    from save_file_manager.cursor import Cursor_icon
+    from save_file_manager.ui_list import UI_list, UI_list_s
+    from save_file_manager.options_ui import Base_UI, Choice, Slider, Toggle, UINoSelectablesError, options_ui
+    from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
+    from save_file_manager.utils import get_key, Get_key_modes, Keys, imput
+
 
 # byte 0A = 10 is bad
 # r.randint(1, 134)
@@ -64,18 +75,15 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
         encode_save(save, 2, save_name, save_ext)
         encode_save(save, 4, save_name, save_ext)
     else:
-        f = open(f'{save_name.replace("*", str(1))}.{save_ext}', "w")
-        for line in save:
-            f.write(line + "\n")
-        f.close()
-        f = open(f'{save_name.replace("*", str(2))}.{save_ext}', "w")
-        for line in save:
-            f.write(line + "\n")
-        f.close()
-        f = open(f'{save_name.replace("*", str(4))}.{save_ext}', "w")
-        for line in save:
-            f.write(line + "\n")
-        f.close()
+        with open(f'{save_name.replace("*", str(1))}.{save_ext}', "w") as f:
+            for line in save:
+                f.write(line + "\n")
+        with open(f'{save_name.replace("*", str(2))}.{save_ext}', "w") as f:
+            for line in save:
+                f.write(line + "\n")
+        with open(f'{save_name.replace("*", str(4))}.{save_ext}', "w") as f:
+            for line in save:
+                f.write(line + "\n")
     
     # menu management
     if not new_method:
@@ -95,10 +103,9 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
                 if is_file_encoded:
                     encode_save(save_new, status[1], save_name, save_ext)
                 else:
-                    f = open(f'{save_name.replace("*", str(status[1]))}.{save_ext}', "w")
-                    for line in save_new:
-                        f.write(line + "\n")
-                    f.close()
+                    with open(f'{save_name.replace("*", str(status[1]))}.{save_ext}', "w") as f:
+                        for line in save_new:
+                            f.write(line + "\n")
             else:
                 input(f"LOADING SAVE {status[1]}!!!")
     else:
@@ -134,7 +141,7 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 # elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
 # elements.append(None)
 # elements.append("2. test")
-# elements.append(Slider(range(2, 20, 2), 2, "slider test 2 |", "#", "-", "| ", True, "l"))
+# elements.append(Slider(range(2, 20, 2), 15, "slider test 2 |", "#", "-", "| ", True, "l"))
 # elements.append(Choice(["h", "j\nt", "l", 1], 2, "choice test ", " lol ", True, "$", True))
 # elements.append(Toggle(1, "toggle test ", post_value=" $"))
 # elements.append(UI_list_s(["one"]))
@@ -145,5 +152,5 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 # print(options_ui(elements, "test", Cursor_icon(">", "<")))
 
 # for element in elements:
-#     if type(element) == Slider or type(element) == Choice or type(element) == Toggle:
+#     if isinstance(Base_UI, element):
 #         print(element.pre_text + str(element.value))

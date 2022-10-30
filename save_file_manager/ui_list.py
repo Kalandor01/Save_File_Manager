@@ -1,6 +1,10 @@
-from typing import Any
 from save_file_manager.cursor import Cursor_icon
-from save_file_manager.utils import get_key
+from save_file_manager.utils import get_key, Get_key_modes, Keys
+# from cursor import Cursor_icon
+# from utils import get_key, Get_key_modes, Keys
+
+from typing import Any
+
 
 class UI_list:
     """
@@ -21,13 +25,13 @@ class UI_list:
     def __init__(self, answer_list:list, question:str=None, cursor_icon:Cursor_icon=None, multiline=False, can_esc=False, action_list:list=None, exclude_nones=False, modify_list=False):
         if cursor_icon is None:
             cursor_icon = Cursor_icon()
-        answer_list = [(ans if ans == None else str(ans)) for ans in answer_list]
+        answer_list = [(ans if ans is None else str(ans)) for ans in answer_list]
         self.answer_list = list(answer_list)
         self.question = str(question)
         self.cursor_icon = cursor_icon
         self.multiline = bool(multiline)
         self.can_esc = bool(can_esc)
-        if action_list == None:
+        if action_list is None:
             self.action_list = []
         else:
             self.action_list = list(action_list)
@@ -35,13 +39,13 @@ class UI_list:
         self.modify_list = bool(modify_list)
 
 
-    def __make_text(self, selected:int, cursor_icon:Cursor_icon=None):
+    def _make_text(self, selected:int, cursor_icon:Cursor_icon=None):
         """Returns the text that represents the UI of this object (-question)."""
-        if cursor_icon == None:
+        if cursor_icon is None:
             cursor_icon = self.cursor_icon
         txt = ""
         for x in range(len(self.answer_list)):
-            if self.answer_list[x] != None:
+            if self.answer_list[x] is not None:
                 if selected == x:
                     curr_icon = cursor_icon.s_icon
                     curr_icon_r = cursor_icon.s_icon_r
@@ -54,12 +58,12 @@ class UI_list:
         return txt
     
     
-    def __convert_selected(self, selected:int):
+    def _convert_selected(self, selected:int):
         """Converts the selected answer number to the actual number depending on if `exclude_nones` is true."""
         if self.exclude_nones:
             selected_f = selected
             for x in range(len(self.answer_list)):
-                if self.answer_list[x] == None:
+                if self.answer_list[x] is None:
                     selected_f -= 1
                 if x == selected:
                     selected = selected_f
@@ -67,11 +71,11 @@ class UI_list:
         return selected
     
     
-    def __move_selection(self, key:int, selected:int):
+    def _move_selection(self, key:Keys, selected:int):
         """Moves the selection depending on the input, in a way, where the selection can't land on an empty line."""
-        if key != 5:
+        if key != Keys.ENTER:
             while True:
-                if key == 2:
+                if key == Keys.DOWN:
                     selected += 1
                     if selected > len(self.answer_list) - 1:
                         selected = 0
@@ -79,20 +83,20 @@ class UI_list:
                     selected -= 1
                     if selected < 0:
                         selected = len(self.answer_list) - 1
-                if self.answer_list[selected] != None:
+                if self.answer_list[selected] is not None:
                     break
         return selected
 
     
-    def __handle_action(self, selected:int, key_mapping:list[list]=None) -> (int|Any):
-        """Handles what to retuen for the selected answer."""
-        if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] != None:
+    def _handle_action(self, selected:int, key_mapping:list[list]=None) -> (int|Any):
+        """Handles what to return for the selected answer."""
+        if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
             # list
-            if type(self.action_list[selected]) == list and len(self.action_list[selected]) >= 2:
+            if type(self.action_list[selected]) is list and len(self.action_list[selected]) >= 2:
                 lis = []
                 di = dict()
                 for elem in self.action_list[selected]:
-                    if type(elem) == dict:
+                    if type(elem) is dict:
                         di.update(elem)
                     else:
                         lis.append(elem)
@@ -102,7 +106,7 @@ class UI_list:
                     func_return = lis[0](*lis[1:], **di)
                 if func_return == -1:
                     return selected
-                elif type(func_return) == list and func_return[0] == -1:
+                elif type(func_return) is list and func_return[0] == -1:
                     func_return[0] = selected
                     return func_return
             # normal function
@@ -113,7 +117,7 @@ class UI_list:
                     func_return = self.action_list[selected]()
                 if func_return == -1:
                     return selected
-                elif type(func_return) == list and func_return[0] == -1:
+                elif type(func_return) is list and func_return[0] == -1:
                     func_return[0] = selected
                     return func_return
             # ui
@@ -128,10 +132,10 @@ class UI_list:
             return selected
         
         
-    def __setup_selected(self):
+    def _setup_selected(self):
         """Returns a selected until it's not on an empty space."""
         selected = 0
-        while self.answer_list[selected] == None:
+        while self.answer_list[selected] is None:
             selected += 1
             if selected > len(self.answer_list) - 1:
                 selected = 0
@@ -153,27 +157,27 @@ class UI_list:
         - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
         """
         while True:
-            selected = self.__setup_selected()
-            key = 0
-            while key != 5:
+            selected = self._setup_selected()
+            key = Keys.ESCAPE
+            while key != Keys.ENTER:
                 # render
                 # clear screen
                 txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-                if self.question != None:
+                if self.question is not None:
                     txt += self.question + "\n\n"
-                txt += self.__make_text(selected)
+                txt += self._make_text(selected)
                 print(txt)
                 # answer select
-                key = get_key(1, key_mapping)
-                if self.can_esc and key == 0:
+                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
+                if self.can_esc and key == Keys.ESCAPE:
                     return -1
-                while key == 0:
-                    key = get_key(1, key_mapping)
-                selected = self.__move_selection(key, selected)
+                while key == Keys.ESCAPE:
+                    key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
+                selected = self._move_selection(key, selected)
             # menu actions
-            selected = self.__convert_selected(selected)
-            action = self.__handle_action(selected, key_mapping)
-            if action != None:
+            selected = self._convert_selected(selected)
+            action = self._handle_action(selected, key_mapping)
+            if action is not None:
                 return action
 
 

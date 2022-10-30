@@ -36,48 +36,47 @@ def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", sa
         line_bytes_enc.append(10)
         return line_bytes_enc
 
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb")
     rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    if type(save_file_lines) == str:
-        save_file_lines = [save_file_lines]
-    # v1
-    if version == 1:
-        f.write(bytes(encode_line(1, rr)))
-        f.write(bytes(encode_line(-1, rr)))
-        rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-        for line in save_file_lines:
-            encoded_line = encode_line(line, rr)
-            f.write(bytes(encoded_line))
-    else:
-        from datetime import datetime
-        f.write(bytes(encode_line(version, rr)))
-        # v2
-        if version == 2:
-            seed_num = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**17.42 * (0.587 + save_num * pi))
-        # v3-4
-        elif version == 3 or version == 4:
-            import os.path
-            path = os.path.dirname(os.path.abspath(__file__)) + f'{save_name.replace("*", str(save_num))}.{save_ext}'
-            b_path = bytes(path, "utf-8")
-            num_p = 1
-            for by in b_path:
-                num_p *= int(by)
-                num_p = int(str(num_p).replace("0", ""))
-            t_now = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**1.42 * (0.587 + save_num * pi))
-            seed_num = float(str(num_p * t_now).replace("0", "").replace("e+", "")) * 15439813
+    with open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "wb") as f:
+        if type(save_file_lines) is str:
+            save_file_lines = [save_file_lines]
+        # v1
+        if version == 1:
+            f.write(bytes(encode_line(1, rr)))
+            f.write(bytes(encode_line(-1, rr)))
+            rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
+            for line in save_file_lines:
+                encoded_line = encode_line(line, rr)
+                f.write(bytes(encoded_line))
         else:
-            seed_num = sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi))
-        encoded_line = encode_line(seed_num, rr)
-        # v4
-        if version == 4:
-            n = datetime.now()
-            seed_num *= (n.year + n.month + n.day)
-        seed = npr.RandomState(int(seed_num % 2**32))
-        f.write(bytes(encoded_line))
-        for line in save_file_lines:
-            encoded_line = encode_line(line, seed)
+            from datetime import datetime
+            f.write(bytes(encode_line(version, rr)))
+            # v2
+            if version == 2:
+                seed_num = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**17.42 * (0.587 + save_num * pi))
+            # v3-4
+            elif version == 3 or version == 4:
+                import os.path
+                path = os.path.dirname(os.path.abspath(__file__)) + f'{save_name.replace("*", str(save_num))}.{save_ext}'
+                b_path = bytes(path, "utf-8")
+                num_p = 1
+                for by in b_path:
+                    num_p *= int(by)
+                    num_p = int(str(num_p).replace("0", ""))
+                t_now = int(str(datetime.now()).replace(" ", "").replace("-", "").replace(".", "").replace(":", "")) / sqrt((save_num * pi)**1.42 * (0.587 + save_num * pi))
+                seed_num = float(str(num_p * t_now).replace("0", "").replace("e+", "")) * 15439813
+            else:
+                seed_num = sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi))
+            encoded_line = encode_line(seed_num, rr)
+            # v4
+            if version == 4:
+                n = datetime.now()
+                seed_num *= (n.year + n.month + n.day)
+            seed = npr.RandomState(int(seed_num % 2**32))
             f.write(bytes(encoded_line))
-    f.close()
+            for line in save_file_lines:
+                encoded_line = encode_line(line, seed)
+                f.write(bytes(encoded_line))
 
 
 def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", decode_until=-1):
@@ -104,14 +103,12 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
 
     # get version
     rr = npr.RandomState(int(sqrt((save_num * pi)**7.42 * (3853.587 + save_num * pi)) % 2**32))
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
-    version = int(decode_line(f.readline(), rr))
-    seed_num = float(decode_line(f.readline(), rr))
-    f.close()
+    with open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb") as f:
+        version = int(decode_line(f.readline(), rr))
+        seed_num = float(decode_line(f.readline(), rr))
     # decode
-    f = open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb")
-    lines = f.readlines()
-    f.close()
+    with open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb") as f:
+        lines = f.readlines()
     lis = []
     if version == 4:
         from datetime import datetime

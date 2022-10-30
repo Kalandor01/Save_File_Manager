@@ -1,4 +1,11 @@
 from save_file_manager.file_conversion import decode_save
+# from file_conversion import decode_save
+
+
+class FileReaderArgsError(Exception):
+    """This exeption is raired if "save_name" and "save_num" are both None in file_reader"""
+    pass
+
 
 def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1, save_num:int=None):
     """
@@ -11,11 +18,11 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
     """
     from os import path, getcwd, listdir
 
-    if dir_name == None:
+    if dir_name is None:
         dir_name = getcwd()
 
     # setup vars
-    if save_name != None:
+    if save_name is not None:
         if save_name.find("*") != -1:
             save_name_post = save_name.split("*")[-1] + "." + save_ext
         else:
@@ -24,17 +31,17 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
         save_count = 0
     # get existing file numbers
     file_names = listdir(dir_name)
-    existing_files = []
+    existing_files:list[str] = []
     for name in file_names:
         # get files by naming pattern
-        if save_name != None:
+        if save_name is not None:
             if path.isfile(path.join(dir_name, name)) and name.startswith(save_name.split("*")[0]) and name.endswith(save_name_post):
                 try: file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
                 except ValueError: continue
                 if file_number <= max_saves or max_saves < 0:
                     existing_files.append(file_number)
         # get files by extension only
-        elif save_num != None:
+        elif save_num is not None:
             if path.isfile(path.join(dir_name, name)) and name.endswith("." + save_ext):
                     existing_files.append(name)
                     if max_saves >= 0:
@@ -42,7 +49,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                         if save_count >= max_saves:
                             break
         else:
-            raise Exception('"save_name" and "save_num" can\'t both be None at the same time')
+            raise FileReaderArgsError('"save_name" and "save_num" can\'t both be None at the same time')
     existing_files.sort()
 
     # get file datas
@@ -51,7 +58,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
         try:
             if is_file_encoded:
                 try:
-                    if save_name != None:
+                    if save_name is not None:
                         data = decode_save(file, path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until=decode_until)
                     else:
                         data = decode_save(save_num, path.join(dir_name, file.replace("." + save_ext, "")), save_ext, decode_until=decode_until)
@@ -59,17 +66,14 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                     data = -1
             else:
                 data = []
-                if save_name != None:
-                    f = open(path.join(dir_name, f'{save_name.replace("*", str(file))}.{save_ext}'), "r")
-                else:
-                    f = open(path.join(dir_name, name), "r")
-                lines = f.readlines()
-                f.close()
+                file_name = (name if save_name is None else f'{save_name.replace("*", str(file))}.{save_ext}')
+                with open(path.join(dir_name, file_name), "r") as f:
+                    lines = f.readlines()
                 for line in lines:
                     data.append(line.replace("\n", ""))
         except FileNotFoundError: pass
         else:
-            if save_name != None:
+            if save_name is not None:
                 file_data.append([file, data])
             else:
                 file_data.append([file.replace("." + save_ext, ""), data])

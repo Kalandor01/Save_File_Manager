@@ -1,7 +1,14 @@
 from save_file_manager.cursor import Cursor_icon
-from save_file_manager.ui_list import UI_list, UI_list_s
-from save_file_manager.utils import get_key
+from save_file_manager.ui_list import UI_list
+from save_file_manager.utils import get_key, Get_key_modes, Keys
+# from cursor import Cursor_icon
+# from ui_list import UI_list
+# from utils import get_key, Get_key_modes, Keys
 
+
+class UINoSelectablesError(Exception):
+    """Exeption raised when there are no values in the"""
+    pass
 
 class Base_UI:
     """
@@ -17,60 +24,69 @@ class Base_UI:
         self.multiline:bool = bool(multiline)
     
     
-    def __make_text(self, selected:bool, cursor_icon:Cursor_icon=None):
+    def _clamp_value(self, value:int, v_min:int, v_max:int):
+        value = int(value)
+        if value > v_max:
+            value = v_max
+        elif value < v_min:
+            value = v_min
+        return value
+    
+    
+    def _make_text(self, child_obj:"Base_UI", icon:str, icon_r:str):
+        """
+        Returns the text representation of the UI element.
+        """
         txt = ""
-        # icon groups
-        s_icons = f"{cursor_icon.s_icon_r}\n{cursor_icon.s_icon}"
-        icons = f"{cursor_icon.icon_r}\n{cursor_icon.icon}"
-        # common
+        # current icon group
+        icons = f"{icon_r}\n{icon}"
         # icon
-        txt += (cursor_icon.s_icon if selected else cursor_icon.icon)
+        txt += icon
         # pre text
-        if self.multiline and self.pre_text.find("\n") != -1:
-            txt += self.pre_text.replace("\n", (s_icons if selected else icons))
+        if self.multiline:
+            txt += self.pre_text.replace("\n", icons)
         else:
             txt += self.pre_text
-        # current value display
-        # slider
-        if type(self) == Slider:
-            # bar
-            for y in self.section:
-                txt += (self.symbol_empty if y >= self.value else self.symbol)
-        # choice
-        if type(self) == Choice:
-            # current choice
-            if self.multiline and self.choice_list[self.value].find("\n") != -1:
-                txt += self.choice_list[self.value].replace("\n", (s_icons if selected else icons))
-            else:
-                txt += self.choice_list[self.value]
-        # toggle
-        if type(self) == Toggle:
-            # on/off
-            txt += (self.symbol_off if self.value == 0 else self.symbol)
+        # special
+        txt += child_obj._make_special(icons)
         # pre value
-        if self.multiline and self.pre_value.find("\n") != -1:
-            txt += self.pre_value.replace("\n", (s_icons if selected else icons))
+        if self.multiline:
+            txt += self.pre_value.replace("\n", icons)
         else:
             txt += self.pre_value
         # value
         if self.display_value:
-            if type(self) == Slider:
-                txt += str(self.value)
-            elif type(self) == Choice:
-                txt += f"{self.value}/{len(self.choice_list)}"
-        # common end
+            txt += child_obj._make_value()
         # post value
-        if self.multiline and self.post_value.find("\n") != -1:
-            txt += self.post_value.replace("\n", (s_icons if selected else icons))
+        if self.multiline:
+            txt += self.post_value.replace("\n", icons)
         else:
             txt += self.post_value
         # icon right
-        txt += (cursor_icon.s_icon_r if selected else cursor_icon.icon_r) + "\n"
+        txt += icon_r + "\n"
         return txt
-        
     
-    def __handle_action(self, selected:int, key_mapping:list[list]=None):
-        pass
+    
+    def _make_special(self, icons_str:str) -> str:
+        """
+        Returns the string representation of the cpecial varable.
+        """
+        return ""
+    
+    
+    def _make_value(self):
+        """
+        Returns the string representation of the value.
+        """
+        return str(self.value)
+    
+    
+    def _handle_action(self, key:Keys):
+        """
+        Handles what to return for the input key.\n
+        Returns False if the screen should not update.
+        """
+        return True
 
 
 class Slider(Base_UI):
@@ -80,16 +96,38 @@ class Slider(Base_UI):
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [pre_text][symbol and symbol_empty][pre_value][value][post_value]
     """
-    def __init__(self, section:int|range, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
-        super().__init__(value, pre_text, pre_value, display_value, post_value, multiline)
-        if type(section) == range:
-            self.section = section
-        elif type(section) == int:
-            self.section = range(section)
+    def __init__(self, value_range:int|range, value=0, pre_text="", symbol="#", symbol_empty="-", pre_value="", display_value=False, post_value="", multiline=False):
+        if type(value_range) is range:
+            self.value_range = value_range
+        elif type(value_range) is int:
+            self.value_range = range(value_range)
         else:
             raise TypeError
+        value = super()._clamp_value(value, min(self.value_range.start, self.value_range.stop), max(self.value_range.start, self.value_range.stop))
+        super().__init__(value, pre_text, pre_value, display_value, post_value, multiline)
         self.symbol = str(symbol)
         self.symbol_empty = str(symbol_empty)
+    
+    
+    def _make_special(self, icons_str:str):
+        txt = ""
+        for x in self.value_range:
+            txt += (self.symbol_empty if x >= self.value else self.symbol)
+        return txt
+    
+    
+    def _handle_action(self, key:Keys):
+        if key == Keys.RIGHT:
+            if self.value + self.value_range.step <= self.value_range.stop:
+                self.value += self.value_range.step
+            else:
+                return False
+        else:
+            if self.value - self.value_range.step >= self.value_range.start:
+                self.value -= self.value_range.step
+            else:
+                return False
+        return True
 
 
 class Choice(Base_UI):
@@ -100,9 +138,30 @@ class Choice(Base_UI):
     Structure: [pre_text][choice name][pre_value][value][post_value]
     """
     def __init__(self, choice_list:list|range, value=0, pre_text="", pre_value="", display_value=False, post_value="", multiline=False):
+        value = super()._clamp_value(value, 0, len(choice_list) - 1)
         super().__init__(value, pre_text, pre_value, display_value, post_value, multiline)
         choice_list = [str(choice) for choice in choice_list]
         self.choice_list = list(choice_list)
+
+
+    def _make_special(self, icons_str:str):
+        if self.multiline:
+            return self.choice_list[self.value].replace("\n", icons_str)
+        else:
+            return self.choice_list[self.value]
+    
+    
+    def _make_value(self):
+        return f"{self.value + 1}/{len(self.choice_list)}"
+    
+    
+    def _handle_action(self, key:Keys):
+        if key == Keys.RIGHT:
+            self.value += 1
+        elif key == Keys.LEFT:
+            self.value -= 1
+        self.value = self.value % len(self.choice_list)
+        return True
 
 
 class Toggle(Base_UI):
@@ -113,9 +172,20 @@ class Toggle(Base_UI):
     Structure: [pre_text][symbol or symbol_off][post_value]
     """
     def __init__(self, value=0, pre_text="", symbol="on", symbol_off="off", post_value="", multiline=False):
+        value = super()._clamp_value(value, 0, 1)
         super().__init__(value, pre_text, "", False, post_value, multiline)
         self.symbol = str(symbol)
         self.symbol_off = str(symbol_off)
+        
+    
+    def _make_special(self, icons_str:str):
+        return (self.symbol_off if self.value == 0 else self.symbol)
+    
+    
+    def _handle_action(self, key: Keys):
+        if key == Keys.ENTER:
+            self.value = int(not bool(self.value))
+        return True
 
 
 def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, cursor_icon:Cursor_icon=None, key_mapping=None):
@@ -126,85 +196,38 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
     """
     if cursor_icon is None:
         cursor_icon = Cursor_icon()
-    # icon groups
-    s_icons = f"{cursor_icon.s_icon_r}\n{cursor_icon.s_icon}"
-    icons = f"{cursor_icon.icon_r}\n{cursor_icon.icon}"
-    # is toggle in list
+    # is enter needed?
     no_enter = True
     for element in elements:
-        if type(element) == Toggle or type(element) == UI_list or type(element) == UI_list_s:
+        if isinstance(element, (Toggle, UI_list)):
             no_enter = False
             break
+    # put selected on selectable
     selected = 0
-    while type(elements[selected]) != Slider and type(elements[selected]) != Choice and type(elements[selected]) != Toggle:
+    while not isinstance(elements[selected], (Base_UI, UI_list)):
         selected += 1
-        if selected > len(elements) - 1:
-            selected = 0
-    key = -2    
-    while key != 0:
+        if selected >= len(elements):
+            raise UINoSelectablesError("No selectable element in the elements list.")
+    # render/getkey loop
+    key = None
+    while key != Keys.ESCAPE:
         # render
         # clear screen
         txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-        if title != None:
+        if title is not None:
             txt += title + "\n\n"
         for x in range(len(elements)):
             element = elements[x]
-            if element == None:
-                txt += "\n"
             # UI elements
-            elif type(element) == Slider or type(element) == Choice or type(element) == Toggle:
-                # txt += element.__make_text(selected == 0, curr_icon)
-                # common
-                # icon
-                txt += (cursor_icon.s_icon if selected == x else cursor_icon.icon)
-                # pre text
-                if element.multiline and element.pre_text.find("\n") != -1:
-                    txt += element.pre_text.replace("\n", (s_icons if selected == x else icons))
-                else:
-                    txt += element.pre_text
-                # current value display
-                # slider
-                if type(element) == Slider:
-                    # bar
-                    for y in element.section:
-                        txt += (element.symbol_empty if y >= element.value else element.symbol)
-                # choice
-                if type(element) == Choice:
-                    # current choice
-                    if element.multiline and element.choice_list[element.value].find("\n") != -1:
-                        txt += element.choice_list[element.value].replace("\n", (s_icons if selected == x else icons))
-                    else:
-                        txt += element.choice_list[element.value]
-                # toggle
-                if type(element) == Toggle:
-                    # on/off
-                    txt += (element.symbol_off if element.value == 0 else element.symbol)
-                # (pre) value
-                if type(element) == Slider or type(element) == Choice:
-                    # pre value
-                    if element.multiline and element.pre_value.find("\n") != -1:
-                        txt += element.pre_value.replace("\n", (s_icons if selected == x else icons))
-                    else:
-                        txt += element.pre_value
-                    # value
-                    if element.display_value:
-                        if type(element) == Slider:
-                            txt += str(element.value)
-                        else:
-                            txt += f"{element.value}/{len(element.choice_list)}"
-                # common end
-                # post value
-                if element.multiline and element.post_value.find("\n") != -1:
-                    txt += element.post_value.replace("\n", (s_icons if selected == x else icons))
-                else:
-                    txt += element.post_value
-                # icon right
-                txt += (cursor_icon.s_icon_r if selected == x else cursor_icon.icon_r) + "\n"
+            if isinstance(element, Base_UI):
+                txt += element._make_text(element,
+                    (cursor_icon.s_icon if selected == x else cursor_icon.icon),
+                    (cursor_icon.s_icon_r if selected == x else cursor_icon.icon_r))
             # UI_list
-            elif type(element) == UI_list or type(element) == UI_list_s:
+            elif isinstance(element, UI_list):
                 # txt += element.__make_text(selected)
                 # render
-                if element.answer_list[0] != None:
+                if element.answer_list[0] is not None:
                     if selected == x:
                         curr_icon = element.cursor_icon.s_icon
                         curr_icon_r = element.cursor_icon.s_icon_r
@@ -214,8 +237,10 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                     txt += curr_icon + (element.answer_list[0].replace("\n", f"{curr_icon_r}\n{curr_icon}") if element.multiline else element.answer_list[0]) + f"{curr_icon_r}\n"
                 else:
                     txt += "\n"
+            elif element is None:
+                txt += "\n"
             else:
-                txt += element + "\n"
+                txt += str(element) + "\n"
         print(txt)
         # move selection/change value
         actual_move = False
@@ -223,18 +248,18 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
             # to prevent useless screen re-render at slider
             actual_move = True
             # get key
-            key = 5
-            if type(elements[selected]) == Toggle or type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
-                key = get_key(1, key_mapping)
+            key = Keys.ENTER
+            if isinstance(elements[selected], (Toggle, UI_list)):
+                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
             else:
-                while key == 5:
-                    key = get_key(0, key_mapping)
-                    if key == 5 and no_enter:
-                        key = 0
+                while key == Keys.ENTER:
+                    key = get_key(Get_key_modes.NO_IGNORE, key_mapping)
+                    if key == Keys.ENTER and no_enter:
+                        key = Keys.ESCAPE
             # move selection
-            if 1 <= key <= 2:
+            if key == Keys.UP or key == Keys.DOWN:
                 while True:
-                    if key == 2:
+                    if key == Keys.DOWN:
                         selected += 1
                         if selected > len(elements) - 1:
                             selected = 0
@@ -242,81 +267,13 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                         selected -= 1
                         if selected < 0:
                             selected = len(elements) - 1
-                    if type(elements[selected]) == Slider or type(elements[selected]) == Choice or type(elements[selected]) == Toggle or type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
+                    if isinstance(elements[selected], (Base_UI, UI_list)):
                         break
-            # move slider/choice
-            elif 3 <= key <= 4:
-                if type(elements[selected]) == Slider:
-                    if key == 4:
-                        if elements[selected].value + elements[selected].section.step <= elements[selected].section.stop:
-                            elements[selected].value += elements[selected].section.step
-                        else:
-                            actual_move = False
-                    else:
-                        if elements[selected].value - elements[selected].section.step >= elements[selected].section.start:
-                            elements[selected].value -= elements[selected].section.step
-                        else:
-                            actual_move = False
-                else:
-                    if key == 4:
-                        elements[selected].value += 1
-                        if elements[selected].value >= len(elements[selected].choice_list):
-                            elements[selected].value = 0
-                    else:
-                        elements[selected].value -= 1
-                        if elements[selected].value < 0:
-                            elements[selected].value = len(elements[selected].choice_list) - 1
-            # toggle
-            elif key == 5:
-                if type(elements[selected]) == Toggle:
-                    elements[selected].value += 1
-                    elements[selected].value %= 2
-                # UI_list
-                elif type(elements[selected]) == UI_list or type(elements[selected]) == UI_list_s:
-                    # menu actions
-                    if elements[selected].exclude_nones:
-                        selected_f = selected
-                        if elements[selected].answer_list[0] == None:
-                            selected_f -= 1
-                        if y == selected:
-                            selected = selected_f
-                    if elements[selected].action_list != [] and 0 < len(elements[selected].action_list) and elements[selected].action_list[0] != None:
-                        # list
-                        if type(elements[selected].action_list[0]) == list and len(elements[selected].action_list[0]) >= 2:
-                            lis = []
-                            di = dict()
-                            for elem in elements[selected].action_list[0]:
-                                if type(elem) == dict:
-                                    di.update(elem)
-                                else:
-                                    lis.append(elem)
-                            if elements[selected].modify_list:
-                                func_return = lis[0]([elements[selected].answer_list, elements[selected].action_list], *lis[1:], **di)
-                            else:
-                                func_return = lis[0](*lis[1:], **di)
-                            if func_return == -1:
-                                return selected
-                            elif type(func_return) == list and func_return[0] == -1:
-                                func_return[0] = selected
-                                return func_return
-                        # normal function
-                        elif callable(elements[selected].action_list[0]):
-                            if elements[selected].modify_list:
-                                func_return = elements[selected].action_list[0]([elements[selected].answer_list, elements[selected].action_list])
-                            else:
-                                func_return = elements[selected].action_list[0]()
-                            if func_return == -1:
-                                return selected
-                            elif type(func_return) == list and func_return[0] == -1:
-                                func_return[0] = selected
-                                return func_return
-                        # ui
-                        else:
-                            # display function or lazy back button
-                            try:
-                                elements[selected].action_list[selected].display(key_mapping=key_mapping)
-                            except AttributeError:
-                                # print("Option is not a UI_list object!")
-                                return selected
-                    else:
-                        return selected
+            # change value Base_UI
+            elif isinstance(elements[selected], Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
+                actual_move = elements[selected]._handle_action(key)
+            # change value UI_list
+            elif isinstance(elements[selected], UI_list) and key == Keys.ENTER:
+                action = elements[selected]._handle_action(selected, key_mapping)
+                if action is not None:
+                    return action

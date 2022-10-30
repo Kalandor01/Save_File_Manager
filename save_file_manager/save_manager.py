@@ -1,6 +1,10 @@
 from save_file_manager.ui_list import UI_list
 from save_file_manager.file_reader import file_reader
-from save_file_manager.utils import _imput
+from save_file_manager.utils import imput
+# from ui_list import UI_list
+# from file_reader import file_reader
+# from utils import imput
+
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
     """
@@ -24,10 +28,10 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
                     file_num = data[0]
                 if data[0] < min_file_num:
                     min_file_num = data[0]
-            option = _imput(f"Select an option: -1: delete mode, 0: new file, {min_file_num}-{file_num}: load file: ")
+            option = imput(f"Select an option: -1: delete mode, 0: new file, {min_file_num}-{file_num}: load file: ")
             # delete
             if option == -1:
-                option = _imput(f"Select an option: 0: back, {min_file_num}-{file_num}: delete file: ")
+                option = imput(f"Select an option: 0: back, {min_file_num}-{file_num}: delete file: ")
                 if min_file_num <= option <= file_num:
                     sure = input(f"Are you sure you want to remove Save file {option}?(Y/N): ")
                     if sure.upper() == "Y":
@@ -179,7 +183,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
     
     # actual function
     # get_fuction default
-    if get_data_function == None:
+    if get_data_function is None:
         get_data_function = [file_reader, max_saves, save_name, save_ext]
     file_data = get_data_function[0](*get_data_function[1:])
     # main
