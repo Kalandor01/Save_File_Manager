@@ -7,7 +7,7 @@ from save_file_manager.utils import get_key, Get_key_modes, Keys
 
 
 class UINoSelectablesError(Exception):
-    """Exeption raised when there are no values in the"""
+    """Exeption raised when there are no values in the selectables list in the `options_ui` function."""
     pass
 
 class Base_UI:
