@@ -33,7 +33,7 @@ class Base_UI:
         return value
     
     
-    def _make_text(self, child_obj:"Base_UI", icon:str, icon_r:str):
+    def make_text(self, icon:str, icon_r:str):
         """
         Returns the text representation of the UI element.
         """
@@ -48,7 +48,7 @@ class Base_UI:
         else:
             txt += self.pre_text
         # special
-        txt += child_obj._make_special(icons)
+        txt += self._make_special(icons)
         # pre value
         if self.multiline:
             txt += self.pre_value.replace("\n", icons)
@@ -56,7 +56,7 @@ class Base_UI:
             txt += self.pre_value
         # value
         if self.display_value:
-            txt += child_obj._make_value()
+            txt += self._make_value()
         # post value
         if self.multiline:
             txt += self.post_value.replace("\n", icons)
@@ -220,7 +220,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
             element = elements[x]
             # UI elements
             if isinstance(element, Base_UI):
-                txt += element._make_text(element,
+                txt += element.make_text(
                     (cursor_icon.s_icon if selected == x else cursor_icon.icon),
                     (cursor_icon.s_icon_r if selected == x else cursor_icon.icon_r))
             # UI_list
