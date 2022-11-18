@@ -88,7 +88,7 @@ class UI_list:
         return selected
 
     
-    def _handle_action(self, selected:int, key_mapping:list[list]=None) -> (int|Any):
+    def _handle_action(self, selected:int, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None) -> (int|Any):
         """Handles what to return for the selected answer."""
         if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
             # list
@@ -142,7 +142,7 @@ class UI_list:
         return selected
     
 
-    def display(self, key_mapping:list[list]=None):
+    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -188,3 +188,12 @@ class UI_list_s(UI_list):
     """
     def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, exclude_nones=False):
         super().__init__(answer_list, question, None, multiline, can_esc, None, exclude_nones, False)
+
+
+class UI_list_button(UI_list):
+    """
+    A version of `UI_list` for use in `options_ui`.\n
+    __init__(text, question=None, cursor_icon, multiline, can_esc=False, action, exclude_nones=False, modify)
+    """
+    def __init__(self, text:str, action:Any=None, multiline=False, modify=False, cursor_icon:Cursor_icon=None):
+        super().__init__([text], None, cursor_icon, multiline, False, (None if action is None else [action]), False, modify)

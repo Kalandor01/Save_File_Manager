@@ -1,3 +1,5 @@
+from typing import Callable
+
 from save_file_manager.cursor import Cursor_icon
 from save_file_manager.ui_list import UI_list
 from save_file_manager.utils import get_key, Get_key_modes, Keys
@@ -81,7 +83,7 @@ class Base_UI:
         return str(self.value)
     
     
-    def _handle_action(self, key:Keys):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
         """
         Handles what to return for the input key.\n
         Returns False if the screen should not update.
@@ -116,7 +118,7 @@ class Slider(Base_UI):
         return txt
     
     
-    def _handle_action(self, key:Keys):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
         if key == Keys.RIGHT:
             if self.value + self.value_range.step <= self.value_range.stop:
                 self.value += self.value_range.step
@@ -155,7 +157,7 @@ class Choice(Base_UI):
         return f"{self.value + 1}/{len(self.choice_list)}"
     
     
-    def _handle_action(self, key:Keys):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
         if key == Keys.RIGHT:
             self.value += 1
         elif key == Keys.LEFT:
@@ -182,13 +184,72 @@ class Toggle(Base_UI):
         return (self.symbol_off if self.value == 0 else self.symbol)
     
     
-    def _handle_action(self, key: Keys):
+    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
         if key == Keys.ENTER:
             self.value = int(not bool(self.value))
         return True
 
 
-def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, cursor_icon:Cursor_icon=None, key_mapping=None):
+class Button(Base_UI):
+    """
+    Object for the options_ui method\n
+    When used as input in the options_ui function, it text that is pressable with the enter key.\n
+    If `action` is a function (or a list with a function as the 1. element, and arguments as the 2-n. element, including 1 or more dictionaries as **kwargs), it will run that function, if the button is clicked.\n
+    - If the function returns False the screen will not rerender.\n
+    - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
+    - If `modify` is `True`, the function (if it's not a `UI_list` object) will get a the `Button` object as it's first argument (and can modify it) when the function is called.\n
+    Multiline makes the "cursor" draw at every line if the text is multiline.\n
+    Structure: [text]
+    """
+    def __init__(self, text="", action:Callable=None, multiline=False, modify=False):
+        super().__init__(-1, text, "", False, "", multiline)
+        self.action = action
+        self.modify = bool(modify)
+    
+    
+    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+        if key == Keys.ENTER:
+            # list
+            if type(self.action) is list and len(self.action) >= 2:
+                lis = []
+                di = dict()
+                for elem in self.action:
+                    if type(elem) is dict:
+                        di.update(elem)
+                    else:
+                        lis.append(elem)
+                if self.modify:
+                    func_return = lis[0](self, *lis[1:], **di)
+                else:
+                    func_return = lis[0](*lis[1:], **di)
+                if func_return is None:
+                    return True
+                else:
+                    return bool(func_return)
+            # normal function
+            elif callable(self.action):
+                if self.modify:
+                    func_return = self.action(self)
+                else:
+                    func_return = self.action()
+                if func_return is None:
+                        return True
+                else:
+                    return bool(func_return)
+            # ui
+            else:
+                # display function or lazy back button
+                try:
+                    self.action.display(key_mapping=key_mapping)
+                except AttributeError:
+                    # print("Option is not a UI_list object!")
+                    pass
+                return True
+        else:
+            return True
+
+
+def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Cursor_icon=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
@@ -249,7 +310,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
             actual_move = True
             # get key
             key = Keys.ENTER
-            if isinstance(elements[selected], (Toggle, UI_list)):
+            if isinstance(elements[selected], (Toggle, Button, UI_list)):
                 key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
             else:
                 while key == Keys.ENTER:
@@ -271,7 +332,7 @@ def options_ui(elements:list[Slider|Choice|Toggle|UI_list], title:str=None, curs
                         break
             # change value Base_UI
             elif isinstance(elements[selected], Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
-                actual_move = elements[selected]._handle_action(key)
+                actual_move = bool(elements[selected]._handle_action(key, key_mapping))
             # change value UI_list
             elif isinstance(elements[selected], UI_list) and key == Keys.ENTER:
                 action = elements[selected]._handle_action(selected, key_mapping)

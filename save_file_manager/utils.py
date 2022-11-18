@@ -18,7 +18,7 @@ class Keys(Enum):
     ENTER = auto()
 
 
-def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:list[list]=None):
+def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]=None):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a value from the `Key` enum depending on the key type.\n
@@ -32,10 +32,10 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:list[list]=None)
     You can set custom keys keybinds by providing a key_map:\n
     [[a list for each value in the `Key` enum, with each list having 2 lists of keys (the 1. list containing the keys that aren't arrow keys, the 2. containing the ones that are)], [double (arrow) key 1. halfs]]\n
     Examles:\n
-    \tdefault: [[[[b"\\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\\r"]]], [b"\\xe0", b"\\x00"]]
-    \tarrow/WASD: [[[[b"\\x1b", b"e"]], [[b"w"], [b"H"]], [[b"s"], [b"P"]], [[b"a"], [b"K"]], [[b"d"], [b"M"]], [[b"\\r", b" "]]], [b"\\xe0", b"\\x00"]]
-    \tonly W, A, and D without setting the mode: [[[], [[b"w"]], [], [[b"a"]], [[b"d"]], []]]
-    \tunintended/compressed: [[[b"\\x1b"], [[], b"H"], [[], b"P"], [[], b"K"], [[], b"M"], [b"\\r"]], b"\\xe0\\x00"]
+    \tdefault: ([[[b"\\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\\r"]]], [b"\\xe0", b"\\x00"])
+    \tarrow/WASD: ([[[b"\\x1b", b"e"]], [[b"w"], [b"H"]], [[b"s"], [b"P"]], [[b"a"], [b"K"]], [[b"d"], [b"M"]], [[b"\\r", b" "]]], [b"\\xe0", b"\\x00"])
+    \tonly W, A, and D without setting the mode: ([[], [[b"w"]], [], [[b"a"]], [[b"d"]], []])
+    \tunintended/compressed: ([[b"\\x1b"], [[], b"H"], [[], b"P"], [[], b"K"], [[], b"M"], [b"\\r"]], b"\\xe0\\x00")
     """
     try:
         from msvcrt import getch
@@ -48,7 +48,7 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:list[list]=None)
     
     arrow = False
     if key_map is None:
-        key_map = [[[[b"\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\r"]]], [b"\xe0", b"\x00"]]
+        key_map = ([[[b"\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\r"]]], [b"\xe0", b"\x00"])
     while True:
         key = getch()
         # print(key)

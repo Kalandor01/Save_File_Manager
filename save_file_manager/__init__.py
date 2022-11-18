@@ -3,23 +3,23 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.13.1.1"
+__version__ = "1.13.2"
 
 
 if __name__ == "__main__":
     from file_reader import FileReaderArgsError, file_reader, file_reader_s, file_reader_blank
     from file_conversion import encode_save, decode_save
     from cursor import Cursor_icon
-    from ui_list import UI_list, UI_list_s
-    from options_ui import Base_UI, Choice, Slider, Toggle, UINoSelectablesError, options_ui
+    from ui_list import UI_list, UI_list_s, UI_list_button
+    from options_ui import Base_UI, Choice, Slider, Toggle, Button, UINoSelectablesError, options_ui
     from save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
     from utils import get_key, Get_key_modes, Keys, imput
 else:
     from save_file_manager.file_reader import FileReaderArgsError, file_reader, file_reader_s, file_reader_blank
     from save_file_manager.file_conversion import encode_save, decode_save
     from save_file_manager.cursor import Cursor_icon
-    from save_file_manager.ui_list import UI_list, UI_list_s
-    from save_file_manager.options_ui import Base_UI, Choice, Slider, Toggle, UINoSelectablesError, options_ui
+    from save_file_manager.ui_list import UI_list, UI_list_s, UI_list_button
+    from save_file_manager.options_ui import Base_UI, Choice, Slider, Toggle, Button, UINoSelectablesError, options_ui
     from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
     from save_file_manager.utils import get_key, Get_key_modes, Keys, imput
 
@@ -137,6 +137,9 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 
 # print(UI_list(["\n1", "\n2", "\n3", None, None, None, "Back", None, None, "\n\n\nlol\n"], "Are you old?", "-->", "  #", "<--", "#  ", True).display())
 
+# def lolno():
+#     return False
+
 # elements = []
 # elements.append(Slider(13, 5, "\nslider test 1\n|", "#", "-", "|\n", True, "$\n", True))
 # elements.append(None)
@@ -147,7 +150,9 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 # elements.append(UI_list_s(["one"]))
 # elements.append(UI_list_s(["two"]))
 # elements.append(None)
-# elements.append(UI_list_s(["three"]))
+# elements.append(UI_list_button("three", lolno))
+# elements.append(Button("yes", lolno))
+# elements.append(Button("hmmm", UI_list_s(["hm", "l"], "kk", can_esc=True)))
 
 # print(options_ui(elements, "test", Cursor_icon(">", "<")))
 

@@ -1,9 +1,11 @@
 from save_file_manager.ui_list import UI_list
 from save_file_manager.file_reader import file_reader
 from save_file_manager.utils import imput
+from save_file_manager.cursor import Cursor_icon
 # from ui_list import UI_list
 # from file_reader import file_reader
 # from utils import imput
+# from cursor import Cursor_icon
 
 
 def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
@@ -59,7 +61,7 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
     return [-1, option]
 
 
-def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:list=None):
+def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -108,7 +110,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping)
+                        option = UI_list(list_data, " Delete mode!", Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(key_mapping)
                         if option != -1 and option != len(list_data) - 1:
                             sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
                             if sure == 1:
@@ -125,7 +127,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
             return [1, 1]
 
 
-def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:str=None):
+def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     The new_save_function and the load_save_function run, when the user preforms these actions, and both WILL get the file number, that was refrenced as their first argument.\n
@@ -164,7 +166,7 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 list_data.pop(len(list_data) - 2)
                 delete_mode = True
                 while delete_mode and len(file_data) > 0:
-                    option = UI_list(list_data, " Delete mode!", "X ", "  ", multiline=False, can_esc=True).display(key_mapping)
+                    option = UI_list(list_data, " Delete mode!",  Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(key_mapping)
                     if option != -1 and option != len(list_data) - 1:
                         option = int(option / 2)
                         sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
