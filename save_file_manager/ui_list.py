@@ -132,9 +132,8 @@ class UI_list:
             return selected
         
         
-    def _setup_selected(self):
+    def _setup_selected(self, selected:int):
         """Returns a selected until it's not on an empty space."""
-        selected = 0
         while self.answer_list[selected] is None:
             selected += 1
             if selected > len(self.answer_list) - 1:
@@ -156,8 +155,9 @@ class UI_list:
         - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
         - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
         """
+        selected = self._setup_selected(0)
         while True:
-            selected = self._setup_selected()
+            selected = self._setup_selected(selected)
             key = Keys.ESCAPE
             while key != Keys.ENTER:
                 # render
