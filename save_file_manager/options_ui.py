@@ -83,7 +83,7 @@ class Base_UI:
         return str(self.value)
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         """
         Handles what to return for the input key.\n
         Returns False if the screen should not update.
@@ -118,7 +118,7 @@ class Slider(Base_UI):
         return txt
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         if key == Keys.RIGHT:
             if self.value + self.value_range.step <= self.value_range.stop:
                 self.value += self.value_range.step
@@ -157,7 +157,7 @@ class Choice(Base_UI):
         return f"{self.value + 1}/{len(self.choice_list)}"
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         if key == Keys.RIGHT:
             self.value += 1
         elif key == Keys.LEFT:
@@ -184,7 +184,7 @@ class Toggle(Base_UI):
         return (self.symbol_off if self.value == 0 else self.symbol)
     
     
-    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         if key == Keys.ENTER:
             self.value = int(not bool(self.value))
         return True
@@ -207,7 +207,7 @@ class Button(Base_UI):
         self.modify = bool(modify)
     
     
-    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]]]=None):
+    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
         if key == Keys.ENTER:
             # list
             if type(self.action) is list and len(self.action) >= 2:
@@ -335,6 +335,6 @@ def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Curso
                 actual_move = bool(elements[selected]._handle_action(key, key_mapping))
             # change value UI_list
             elif isinstance(elements[selected], UI_list) and key == Keys.ENTER:
-                action = elements[selected]._handle_action(selected, key_mapping)
+                action = elements[selected]._handle_action(0, key_mapping)
                 if action is not None:
                     return action

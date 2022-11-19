@@ -1,3 +1,4 @@
+from typing import Literal
 from save_file_manager.file_conversion import decode_save
 # from file_conversion import decode_save
 
@@ -53,7 +54,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
     existing_files.sort()
 
     # get file datas
-    file_data = []
+    file_data:list[tuple[str, list[str]|Literal[-1]]] = []
     for file in existing_files:
         try:
             if is_file_encoded:
@@ -74,9 +75,9 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
         except FileNotFoundError: pass
         else:
             if save_name is not None:
-                file_data.append([file, data])
+                file_data.append((file, data))
             else:
-                file_data.append([file.replace("." + save_ext, ""), data])
+                file_data.append((file.replace("." + save_ext, ""), data))
     return file_data
 
 

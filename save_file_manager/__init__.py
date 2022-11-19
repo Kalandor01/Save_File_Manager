@@ -3,7 +3,7 @@ This module allows a basic (save) file creation, loading and deletion interface,
 It also has a function for a displaying basic UI elements.\n
 Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
 """
-__version__ = "1.13.3"
+__version__ = "1.13.4"
 
 
 if __name__ == "__main__":
@@ -92,9 +92,10 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
             datas_merged = []
             for data in datas:
                 lines = ""
-                for line in data[1]:
-                    lines += line
-                datas_merged.append([data[0], lines])
+                if data[1] != -1:
+                    for line in data[1]:
+                        lines += line
+                    datas_merged.append([data[0], lines])
             status = manage_saves_ui(datas_merged, max_saves, save_name, save_ext, can_exit)
             if status[0] == -1:
                 break
@@ -122,9 +123,10 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
             datas_merged = []
             for data in datas:
                 lines = ""
-                for line in data[1]:
-                    lines += line
-                datas_merged.append([data[0], lines])
+                if data[1] != -1:
+                    for line in data[1]:
+                        lines += line
+                    datas_merged.append([data[0], lines])
             return datas_merged
 
         # menu management
