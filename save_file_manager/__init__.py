@@ -1,7 +1,6 @@
 """
-This module allows a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
-It also has a function for a displaying basic UI elements.\n
-Use 'dir_name = os.path.dirname(os.path.abspath(__file__))' as the directory name to save files in the current directory instead of the default path.
+This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
+It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
 __version__ = "1.13.4"
 
