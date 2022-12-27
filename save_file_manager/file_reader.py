@@ -8,7 +8,7 @@ class FileReaderArgsError(Exception):
     pass
 
 
-def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str=None, is_file_encoded=True, decode_until=-1, save_num:int=None):
+def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_name:str|None=None, is_file_encoded=True, decode_until=-1, save_num:int|None=None):
     """
     Gets data from all save files in a folder, and returns them in a format that save managers can read.\n
     Returns an array, where each element is an array, where the 1. element is the `save_num` or `save_name` (depending on witch one is not given) and the 2. is a list of decripted lines from the file.\n
@@ -23,13 +23,13 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
         dir_name = getcwd()
 
     # setup vars
+    save_name_post = ""
+    save_count = 0
     if save_name is not None:
         if save_name.find("*") != -1:
             save_name_post = save_name.split("*")[-1] + "." + save_ext
         else:
             save_name_post = "." + save_ext
-    else:
-        save_count = 0
     # get existing file numbers
     file_names = listdir(dir_name)
     existing_files:list[str] = []
@@ -40,7 +40,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                 try: file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
                 except ValueError: continue
                 if file_number <= max_saves or max_saves < 0:
-                    existing_files.append(file_number)
+                    existing_files.append(str(file_number))
         # get files by extension only
         elif save_num is not None:
             if path.isfile(path.join(dir_name, name)) and name.endswith("." + save_ext):
@@ -55,19 +55,20 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
 
     # get file datas
     file_data:list[tuple[str, list[str]|Literal[-1]]] = []
+    data:list[str]|Literal[-1] =  []
     for file in existing_files:
         try:
             if is_file_encoded:
                 try:
                     if save_name is not None:
-                        data = decode_save(file, path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until=decode_until)
-                    else:
+                        data = decode_save(int(file), path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until=decode_until)
+                    elif save_num is not None:
                         data = decode_save(save_num, path.join(dir_name, file.replace("." + save_ext, "")), save_ext, decode_until=decode_until)
                 except ValueError:
                     data = -1
             else:
                 data = []
-                file_name = (name if save_name is None else f'{save_name.replace("*", str(file))}.{save_ext}')
+                file_name = (file if save_name is None else f'{save_name.replace("*", str(file))}.{save_ext}')
                 with open(path.join(dir_name, file_name), "r") as f:
                     lines = f.readlines()
                 for line in lines:
@@ -81,7 +82,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
     return file_data
 
 
-def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
+def file_reader_s(save_name="save*", dir_name:str|None=None, decode_until=-1):
     """
     Short version of `file_reader`.\n
     file_reader(max_saves=-1, save_name, save_ext="sav", dir_name, is_file_encoded=True, decode_until, save_num=None)
@@ -89,7 +90,7 @@ def file_reader_s(save_name="save*", dir_name:str=None, decode_until=-1):
     return file_reader(max_saves=-1, save_name=save_name, save_ext="sav", dir_name=dir_name, is_file_encoded=True, decode_until=decode_until, save_num=None)
 
 
-def file_reader_blank(save_num, dir_name:str=None, decode_until=-1):
+def file_reader_blank(save_num, dir_name:str|None=None, decode_until=-1):
     """
     Short version of `file_reader`, but for save files with different names, but same `save_num`s.\n
     file_reader(max_saves=-1, save_name=None, save_ext="sav", dir_name, is_file_encoded=True, decode_until, save_num)

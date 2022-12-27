@@ -1,3 +1,6 @@
+from typing import Any, Callable, Literal
+from os import remove
+
 from save_file_manager.ui_list import UI_list
 from save_file_manager.file_reader import file_reader
 from save_file_manager.utils import imput
@@ -8,7 +11,7 @@ from save_file_manager.cursor import Cursor_icon
 # from cursor import Cursor_icon
 
 
-def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav"):
+def manage_saves(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, save_name="save*", save_ext="sav") -> tuple[Literal[-1, 0, 1], int]:
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -17,8 +20,8 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
     \t[1, x] = new file, into x slot\n
     \t[-1, x] = deleted file in x slot
     """
-    from os import remove
 
+    option = 1
     manage_exit = False
     while not manage_exit:
         if len(file_data):
@@ -46,22 +49,22 @@ def manage_saves(file_data:list, max_saves=5, save_name="save*", save_ext="sav")
                     if data[0] == new_slot:
                         new_slot += 1
                 if new_slot <= max_saves or max_saves < 0:
-                    return [1, new_slot]
+                    return (1, new_slot)
                 else:
                     input(f"No empty save files! Delete a file to continue!")
             # load
             else:
                 for data in file_data:
                     if data[0] == option:
-                        return [0, option]
+                        return (0, option)
                 print(f"Save file {option} doesn't exist!")
         else:
             input(f"No save files!")
-            return [1, 1]
-    return [-1, option]
+            return (1, 1)
+    return (-1, option)
 
 
-def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None) -> tuple[Literal[-1, 0, 1], int]:
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -70,7 +73,6 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
     \t[1, x] = new file, into x slot\n
     \t[-1, -1] = exit
     """
-    from os import remove
 
     in_main_menu = True
     while True:
@@ -87,11 +89,11 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                     if data[0] == new_slot:
                         new_slot += 1
                 if new_slot <= max_saves or max_saves < 0:
-                    return [1, new_slot]
+                    return (1, new_slot)
                 else:
                     input(f"No empty save files! Delete a file to continue!")
             elif option == -1:
-                return [-1, -1]
+                return (-1, -1)
             # load/delete
             else:
                 # get data from file_data
@@ -104,7 +106,7 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                 option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping)
                 # load
                 if option != -1 and option < len(file_data):
-                    return [0, file_data[option][0]]
+                    return (0, file_data[option][0])
                 # delete
                 elif option == len(file_data) + 1:
                     list_data.pop(len(list_data) - 2)
@@ -124,19 +126,24 @@ def manage_saves_ui(file_data, max_saves=5, save_name="save*", save_ext="sav", c
                     in_main_menu = True
         else:
             input(f"\n No save files detected!")
-            return [1, 1]
+            return (1, 1)
 
 
-def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_function:list=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:list[Callable|Any], get_data_function:list[Callable|Any]|None=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     The new_save_function and the load_save_function run, when the user preforms these actions, and both WILL get the file number, that was refrenced as their first argument.\n
     The get_data_function should return a list with all of the save file data, similar to the file_redaer function.\n
     The first element of all function lists should allways be the function. All other elements will be treated as arguments for that function.
     """
-    from os import remove
+    
+    # get_fuction default
+    if get_data_function is None:
+        get_data_function = [file_reader, max_saves, save_name, save_ext]
 
     def new_save_pre(new_func):
+        if not callable(get_data_function[0]):
+            get_data_function[0] = file_reader
         file_data = get_data_function[0](*get_data_function[1:])
         new_slot = 1
         for data in file_data:
@@ -150,6 +157,8 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
     def load_or_delete(load_func):
         while True:
             # get data from file_data
+            if not callable(get_data_function[0]):
+                get_data_function[0] = file_reader
             file_data = get_data_function[0](*get_data_function[1:])
             list_data = []
             for data in file_data:
@@ -184,9 +193,8 @@ def manage_saves_ui_2(new_save_function:list, load_save_function:list, get_data_
                 break
     
     # actual function
-    # get_fuction default
-    if get_data_function is None:
-        get_data_function = [file_reader, max_saves, save_name, save_ext]
+    if not callable(get_data_function[0]):
+        get_data_function[0] = file_reader
     file_data = get_data_function[0](*get_data_function[1:])
     # main
     if len(file_data):

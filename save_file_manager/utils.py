@@ -18,7 +18,7 @@ class Keys(Enum):
     ENTER = auto()
 
 
-def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]=None):
+def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a value from the `Key` enum depending on the key type.\n
@@ -58,10 +58,10 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[
             key = getch()
             # print("arrow", key)
         
-        for x in range(len(response_list)):
+        for x, response in enumerate(response_list):
             if ((not arrow and len(key_map[0][x]) > 0 and key in key_map[0][x][0]) or
                 (arrow and len(key_map[0][x]) > 1 and key in key_map[0][x][1])) and mode != ignore_list[x]:
-                return response_list[x]
+                return response
 
 
 def imput(ask="Num: "):

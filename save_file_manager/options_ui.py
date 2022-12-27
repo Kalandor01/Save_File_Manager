@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Any, Callable
 
 from save_file_manager.cursor import Cursor_icon
 from save_file_manager.ui_list import UI_list
@@ -83,7 +83,7 @@ class Base_UI:
         return str(self.value)
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         """
         Handles what to return for the input key.\n
         Returns False if the screen should not update.
@@ -113,12 +113,12 @@ class Slider(Base_UI):
     
     def _make_special(self, icons_str:str):
         txt = ""
-        for x in self.value_range:
-            txt += (self.symbol_empty if x >= self.value else self.symbol)
+        for value in self.value_range:
+            txt += (self.symbol_empty if value >= self.value else self.symbol)
         return txt
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         if key == Keys.RIGHT:
             if self.value + self.value_range.step <= self.value_range.stop:
                 self.value += self.value_range.step
@@ -157,7 +157,7 @@ class Choice(Base_UI):
         return f"{self.value + 1}/{len(self.choice_list)}"
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         if key == Keys.RIGHT:
             self.value += 1
         elif key == Keys.LEFT:
@@ -184,7 +184,7 @@ class Toggle(Base_UI):
         return (self.symbol_off if self.value == 0 else self.symbol)
     
     
-    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         if key == Keys.ENTER:
             self.value = int(not bool(self.value))
         return True
@@ -201,13 +201,13 @@ class Button(Base_UI):
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [text]
     """
-    def __init__(self, text="", action:Callable=None, multiline=False, modify=False):
+    def __init__(self, text="", action:Callable|list[Callable|Any]|None=None, multiline=False, modify=False):
         super().__init__(-1, text, "", False, "", multiline)
         self.action = action
         self.modify = bool(modify)
     
     
-    def _handle_action(self, key: Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         if key == Keys.ENTER:
             # list
             if type(self.action) is list and len(self.action) >= 2:
@@ -239,9 +239,9 @@ class Button(Base_UI):
             # ui
             else:
                 # display function or lazy back button
-                try:
+                if isinstance(self.action, UI_list):
                     self.action.display(key_mapping=key_mapping)
-                except AttributeError:
+                else:
                     # print("Option is not a UI_list object!")
                     pass
                 return True
@@ -249,7 +249,7 @@ class Button(Base_UI):
             return True
 
 
-def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Cursor_icon=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
@@ -277,8 +277,7 @@ def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Curso
         txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
         if title is not None:
             txt += title + "\n\n"
-        for x in range(len(elements)):
-            element = elements[x]
+        for x, element in enumerate(elements):
             # UI elements
             if isinstance(element, Base_UI):
                 txt += element.make_text(
@@ -310,7 +309,8 @@ def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Curso
             actual_move = True
             # get key
             key = Keys.ENTER
-            if isinstance(elements[selected], (Toggle, Button, UI_list)):
+            selected_e = elements[selected]
+            if isinstance(selected_e, (Toggle, Button, UI_list)):
                 key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
             else:
                 while key == Keys.ENTER:
@@ -331,10 +331,10 @@ def options_ui(elements:list[Base_UI|UI_list], title:str=None, cursor_icon:Curso
                     if isinstance(elements[selected], (Base_UI, UI_list)):
                         break
             # change value Base_UI
-            elif isinstance(elements[selected], Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
-                actual_move = bool(elements[selected]._handle_action(key, key_mapping))
+            elif isinstance(selected_e, Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
+                actual_move = bool(selected_e._handle_action(key, key_mapping))
             # change value UI_list
-            elif isinstance(elements[selected], UI_list) and key == Keys.ENTER:
-                action = elements[selected]._handle_action(0, key_mapping)
+            elif isinstance(selected_e, UI_list) and key == Keys.ENTER:
+                action = selected_e._handle_action(0, key_mapping)
                 if action is not None:
                     return action

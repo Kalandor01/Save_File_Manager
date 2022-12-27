@@ -22,7 +22,7 @@ class UI_list:
     - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
     """
 
-    def __init__(self, answer_list:list, question:str=None, cursor_icon:Cursor_icon=None, multiline=False, can_esc=False, action_list:list=None, exclude_nones=False, modify_list=False):
+    def __init__(self, answer_list:list[str|None], question:str|None=None, cursor_icon:Cursor_icon|None=None, multiline=False, can_esc=False, action_list:list|None=None, exclude_nones=False, modify_list=False):
         if cursor_icon is None:
             cursor_icon = Cursor_icon()
         answer_list = [(ans if ans is None else str(ans)) for ans in answer_list]
@@ -39,20 +39,20 @@ class UI_list:
         self.modify_list = bool(modify_list)
 
 
-    def _make_text(self, selected:int, cursor_icon:Cursor_icon=None):
+    def _make_text(self, selected:int, cursor_icon:Cursor_icon|None=None):
         """Returns the text that represents the UI of this object (-question)."""
         if cursor_icon is None:
             cursor_icon = self.cursor_icon
         txt = ""
-        for x in range(len(self.answer_list)):
-            if self.answer_list[x] is not None:
+        for x, answer in enumerate(self.answer_list):
+            if answer is not None:
                 if selected == x:
                     curr_icon = cursor_icon.s_icon
                     curr_icon_r = cursor_icon.s_icon_r
                 else:
                     curr_icon = cursor_icon.icon
                     curr_icon_r = cursor_icon.icon_r
-                txt += curr_icon + (self.answer_list[x].replace("\n", f"{curr_icon_r}\n{curr_icon}") if self.multiline else self.answer_list[x]) + f"{curr_icon_r}\n"
+                txt += curr_icon + (answer.replace("\n", f"{curr_icon_r}\n{curr_icon}") if self.multiline else answer) + f"{curr_icon_r}\n"
             else:
                 txt += "\n"
         return txt
@@ -62,8 +62,8 @@ class UI_list:
         """Converts the selected answer number to the actual number depending on if `exclude_nones` is true."""
         if self.exclude_nones:
             selected_f = selected
-            for x in range(len(self.answer_list)):
-                if self.answer_list[x] is None:
+            for x, answer in enumerate(self.answer_list):
+                if answer is None:
                     selected_f -= 1
                 if x == selected:
                     selected = selected_f
@@ -88,7 +88,7 @@ class UI_list:
         return selected
 
     
-    def _handle_action(self, selected:int, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None) -> (int|Any):
+    def _handle_action(self, selected:int, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None) -> (int|Any):
         """Handles what to return for the selected answer."""
         if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
             # list
@@ -134,6 +134,8 @@ class UI_list:
         
     def _setup_selected(self, selected:int):
         """Returns a selected until it's not on an empty space."""
+        if selected > len(self.answer_list) - 1:
+            selected = len(self.answer_list) - 1
         while self.answer_list[selected] is None:
             selected += 1
             if selected > len(self.answer_list) - 1:
@@ -141,7 +143,7 @@ class UI_list:
         return selected
     
 
-    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]=None):
+    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -186,7 +188,7 @@ class UI_list_s(UI_list):
     Short version of `UI_list`.\n
     __init__(answer_list, question, cursor_icon=None, multiline, can_esc, action_list=None, exclude_nones, modify_list=False)
     """
-    def __init__(self, answer_list:list, question:str=None, multiline=False, can_esc=False, exclude_nones=False):
+    def __init__(self, answer_list:list[str|None], question:str|None=None, multiline=False, can_esc=False, exclude_nones=False):
         super().__init__(answer_list, question, None, multiline, can_esc, None, exclude_nones, False)
 
 
@@ -195,5 +197,5 @@ class UI_list_button(UI_list):
     A version of `UI_list` for use in `options_ui`.\n
     __init__(text, question=None, cursor_icon, multiline, can_esc=False, action, exclude_nones=False, modify)
     """
-    def __init__(self, text:str, action:Any=None, multiline=False, modify=False, cursor_icon:Cursor_icon=None):
+    def __init__(self, text:str, action:Any=None, multiline=False, modify=False, cursor_icon:Cursor_icon|None=None):
         super().__init__([text], None, cursor_icon, multiline, False, (None if action is None else [action]), False, modify)

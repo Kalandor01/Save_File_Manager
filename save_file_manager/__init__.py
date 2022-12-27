@@ -2,7 +2,7 @@
 This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
-__version__ = "1.13.4"
+__version__ = "1.14"
 
 
 if __name__ == "__main__":
@@ -66,6 +66,8 @@ else:
 
 
 def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", is_file_encoded=True, can_exit=True):
+    from typing import Literal
+    
     # create files
     save = ["dude thing 42069", "áéűől4"]
     save_new = ["loading lol 69", "űűűűűűűűűűűűűűűűűűűűűűááááááááááááűáűáűááááááááá"]
@@ -88,13 +90,14 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
     if not new_method:
         while True:
             datas = file_reader(max_saves, save_name, save_ext, None, is_file_encoded)
-            datas_merged = []
+            datas_merged:list[tuple[int, str | Literal[-1]]] = []
             for data in datas:
                 lines = ""
                 if data[1] != -1:
                     for line in data[1]:
                         lines += line
-                    datas_merged.append([data[0], lines])
+                    try: datas_merged.append((int(data[0]), lines))
+                    except ValueError: pass
             status = manage_saves_ui(datas_merged, max_saves, save_name, save_ext, can_exit)
             if status[0] == -1:
                 break

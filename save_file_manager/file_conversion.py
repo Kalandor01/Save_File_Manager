@@ -89,7 +89,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows
     from base64 import b64decode
     from numpy import random as npr
 
-    def decode_line(line:list, r:npr.RandomState):
+    def decode_line(line:bytes, r:npr.RandomState):
         encode_64 = r.randint(2, 5)
         line_bytes = bytearray("", "utf-8")
         for byte in line:
