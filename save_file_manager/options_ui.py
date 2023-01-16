@@ -249,11 +249,12 @@ class Button(Base_UI):
             return True
 
 
-def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
-    if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.
+    if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.\n
+    If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
     """
     if cursor_icon is None:
         cursor_icon = Cursor_icon()
@@ -311,10 +312,10 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
             key = Keys.ENTER
             selected_e = elements[selected]
             if isinstance(selected_e, (Toggle, Button, UI_list)):
-                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
+                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
             else:
                 while key == Keys.ENTER:
-                    key = get_key(Get_key_modes.NO_IGNORE, key_mapping)
+                    key = get_key(Get_key_modes.NO_IGNORE, key_mapping, allow_buffered_inputs)
                     if key == Keys.ENTER and no_enter:
                         key = Keys.ESCAPE
             # move selection

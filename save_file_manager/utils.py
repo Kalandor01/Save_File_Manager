@@ -18,11 +18,12 @@ class Keys(Enum):
     ENTER = auto()
 
 
-def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a value from the `Key` enum depending on the key type.\n
     Throws an error if msvcrt/getch was not found. (this module is windows only)\n
+    If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.\n
     Depending on the mode, it ignores some keys:\n
     \tNO_IGNORE: don't ignore any key
     \tIGNORE_HORIZONTAL: ignore left/right
@@ -38,7 +39,7 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[
     \tunintended/compressed: ([[b"\\x1b"], [[], b"H"], [[], b"P"], [[], b"K"], [[], b"M"], [b"\\r"]], b"\\xe0\\x00")
     """
     try:
-        from msvcrt import getch
+        from msvcrt import getch, kbhit
     except ModuleNotFoundError:
         raise ModuleNotFoundError("msvcrt module not found!\nThis module is windows only!")
     
@@ -46,6 +47,10 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[
                    Get_key_modes.IGNORE_HORIZONTAL, Get_key_modes.IGNORE_HORIZONTAL, Get_key_modes.IGNORE_ENTER]
     response_list = [Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER]
     
+    if not allow_buffered_inputs:
+        while kbhit():
+            getch()
+
     arrow = False
     if key_map is None:
         key_map = ([[[b"\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\r"]]], [b"\xe0", b"\x00"])

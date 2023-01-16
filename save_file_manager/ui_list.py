@@ -143,7 +143,7 @@ class UI_list:
         return selected
     
 
-    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -156,6 +156,7 @@ class UI_list:
         - If the function returns a list where the first element is -1 the `display` function will instantly return that list with the first element replaced by the selected element number of that `UI_list` object.\n
         - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
         - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
+        If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
         """
         selected = self._setup_selected(0)
         while True:
@@ -170,11 +171,11 @@ class UI_list:
                 txt += self._make_text(selected)
                 print(txt)
                 # answer select
-                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
+                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
                 if self.can_esc and key == Keys.ESCAPE:
                     return -1
                 while key == Keys.ESCAPE:
-                    key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping)
+                    key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
                 selected = self._move_selection(key, selected)
             # menu actions
             selected = self._convert_selected(selected)
