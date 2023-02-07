@@ -2,7 +2,7 @@
 This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
-__version__ = "1.14.1"
+__version__ = "1.15"
 
 
 if __name__ == "__main__":
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     from ui_list import UI_list, UI_list_s, UI_list_button
     from options_ui import Base_UI, Choice, Slider, Toggle, Button, UINoSelectablesError, options_ui
     from save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
-    from utils import get_key, Get_key_modes, Keys, imput
+    from utils import get_key, Get_key_modes, Keys, imput, Keybinds, Key_action, get_key_with_obj
 else:
     from save_file_manager.file_reader import FileReaderArgsError, file_reader, file_reader_s, file_reader_blank
     from save_file_manager.file_conversion import encode_save, decode_save
@@ -20,7 +20,7 @@ else:
     from save_file_manager.ui_list import UI_list, UI_list_s, UI_list_button
     from save_file_manager.options_ui import Base_UI, Choice, Slider, Toggle, Button, UINoSelectablesError, options_ui
     from save_file_manager.save_manager import manage_saves, manage_saves_ui, manage_saves_ui_2
-    from save_file_manager.utils import get_key, Get_key_modes, Keys, imput
+    from save_file_manager.utils import get_key, Get_key_modes, Keys, imput, Keybinds, Key_action, get_key_with_obj
 
 
 # byte 0A = 10 is bad
@@ -158,8 +158,30 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 # elements.append(Button("yes", lolno))
 # elements.append(Button("hmmm", UI_list_s(["hm", "l"], "kk", can_esc=True)))
 
-# print(options_ui(elements, "test", Cursor_icon(">", "<")))
+# acts = [
+#     Key_action(Keys.ESCAPE, [b"q"], [], [Get_key_modes.IGNORE_ESCAPE]),
+#     Key_action(Keys.UP, [b"w"], [], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.DOWN, [b"s"], [], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.LEFT, [b"a"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.RIGHT, [b"d"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.ENTER, [b"e"], [], [Get_key_modes.IGNORE_ENTER]),
+# ]
+# kb = Keybinds(acts, [b"\xe0", b"\x00"])
+
+# print(options_ui(elements, "test", Cursor_icon(">", "<"), kb))
 
 # for element in elements:
 #     if isinstance(Base_UI, element):
 #         print(element.pre_text + str(element.value))
+
+
+# acts = [
+#     Key_action(Keys.ESCAPE, [b"\x1b"], [], [Get_key_modes.IGNORE_ESCAPE]),
+#     Key_action(Keys.UP, [], [b"H"], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.DOWN, [], [b"P"], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.LEFT, [], [b"K"], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.RIGHT, [], [b"M"], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.ENTER, [b"\r"], [], [Get_key_modes.IGNORE_ENTER]),
+# ]
+# kb = Keybinds(acts, [b"\xe0", b"\x00"])
+# while True: print(get_key_with_obj([Get_key_modes.IGNORE_HORIZONTAL, Get_key_modes.IGNORE_ESCAPE], kb))

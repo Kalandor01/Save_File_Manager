@@ -3,11 +3,11 @@ from os import remove
 
 from save_file_manager.ui_list import UI_list
 from save_file_manager.file_reader import file_reader
-from save_file_manager.utils import imput
+from save_file_manager.utils import imput, Keybinds
 from save_file_manager.cursor import Cursor_icon
 # from ui_list import UI_list
 # from file_reader import file_reader
-# from utils import imput
+# from utils import imput, Keybinds
 # from cursor import Cursor_icon
 
 
@@ -64,7 +64,7 @@ def manage_saves(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, sav
     return (-1, option)
 
 
-def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None) -> tuple[Literal[-1, 0, 1], int]:
+def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, save_name="save*", save_ext="sav", can_exit=False, keybinds:Keybinds|None=None) -> tuple[Literal[-1, 0, 1], int]:
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     Reads in file data as a 2D array where element 0 is the save file number, and element 1 is the array of strings read in from file reader.\n
@@ -79,7 +79,7 @@ def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, 
         if len(file_data):
             if in_main_menu:
                 in_main_menu = False
-                option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc=can_exit).display(key_mapping=key_mapping)
+                option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc=can_exit).display(keybinds=keybinds)
             else:
                 option = 1
             # new file
@@ -103,7 +103,7 @@ def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, 
                 list_data.append(None)
                 list_data.append("Delete file")
                 list_data.append("Back")
-                option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping)
+                option = UI_list(list_data, " Level select", can_esc=True).display(keybinds)
                 # load
                 if option != -1 and option < len(file_data):
                     return (0, file_data[option][0])
@@ -112,9 +112,9 @@ def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, 
                     list_data.pop(len(list_data) - 2)
                     delete_mode = True
                     while delete_mode and len(file_data) > 0:
-                        option = UI_list(list_data, " Delete mode!", Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(key_mapping)
+                        option = UI_list(list_data, " Delete mode!", Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(keybinds)
                         if option != -1 and option != len(list_data) - 1:
-                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
+                            sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(keybinds)
                             if sure == 1:
                                 remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                                 list_data.pop(option)
@@ -129,7 +129,7 @@ def manage_saves_ui(file_data:list[tuple[int, str | Literal[-1]]], max_saves=5, 
             return (1, 1)
 
 
-def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:list[Callable|Any], get_data_function:list[Callable|Any]|None=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:list[Callable|Any], get_data_function:list[Callable|Any]|None=None, max_saves=5, save_name="save*", save_ext="sav", can_exit=False, keybinds:Keybinds|None=None):
     """
     Allows the user to pick between creating a new save, loading an old save and deleteing a save, with UI selection.\n
     The new_save_function and the load_save_function run, when the user preforms these actions, and both WILL get the file number, that was refrenced as their first argument.\n
@@ -166,7 +166,7 @@ def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:l
                 list_data.append(None)
             list_data.append("Delete file")
             list_data.append("Back")
-            option = UI_list(list_data, " Level select", can_esc=True).display(key_mapping)
+            option = UI_list(list_data, " Level select", can_esc=True).display(keybinds)
             # load
             if option != -1 and option / 2 < len(file_data):
                 load_func[0](file_data[int(option / 2)][0], *load_func[1:])
@@ -175,10 +175,10 @@ def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:l
                 list_data.pop(len(list_data) - 2)
                 delete_mode = True
                 while delete_mode and len(file_data) > 0:
-                    option = UI_list(list_data, " Delete mode!",  Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(key_mapping)
+                    option = UI_list(list_data, " Delete mode!",  Cursor_icon("X ", "", "  "), multiline=False, can_esc=True).display(keybinds)
                     if option != -1 and option != len(list_data) - 1:
                         option = int(option / 2)
-                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(key_mapping)
+                        sure = UI_list(["No", "Yes"], f" Are you sure you want to remove Save file {file_data[option][0]}?", can_esc=True).display(keybinds)
                         if sure == 1:
                             remove(f'{save_name.replace("*", str(file_data[option][0]))}.{save_ext}')
                             list_data.pop(option)
@@ -198,7 +198,7 @@ def manage_saves_ui_2(new_save_function:list[Callable|Any], load_save_function:l
     file_data = get_data_function[0](*get_data_function[1:])
     # main
     if len(file_data):
-        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display(key_mapping)
+        option = UI_list(["New save", "Load/Delete save"], " Main menu", can_esc = can_exit, action_list = [[new_save_pre, new_save_function], [load_or_delete, load_save_function]]).display(keybinds)
         if option == -1:
             return -1
     else:

@@ -2,10 +2,10 @@ from typing import Any, Callable
 
 from save_file_manager.cursor import Cursor_icon
 from save_file_manager.ui_list import UI_list
-from save_file_manager.utils import get_key, Get_key_modes, Keys
+from save_file_manager.utils import Get_key_modes, Keys, Keybinds, get_key_with_obj
 # from cursor import Cursor_icon
 # from ui_list import UI_list
-# from utils import get_key, Get_key_modes, Keys
+# from utils import Get_key_modes, Keys, Keybinds, get_key_with_obj
 
 
 class UINoSelectablesError(Exception):
@@ -83,7 +83,7 @@ class Base_UI:
         return str(self.value)
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
         """
         Handles what to return for the input key.\n
         Returns False if the screen should not update.
@@ -118,7 +118,7 @@ class Slider(Base_UI):
         return txt
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
         if key == Keys.RIGHT:
             if self.value + self.value_range.step <= self.value_range.stop:
                 self.value += self.value_range.step
@@ -157,7 +157,7 @@ class Choice(Base_UI):
         return f"{self.value + 1}/{len(self.choice_list)}"
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
         if key == Keys.RIGHT:
             self.value += 1
         elif key == Keys.LEFT:
@@ -184,7 +184,7 @@ class Toggle(Base_UI):
         return (self.symbol_off if self.value == 0 else self.symbol)
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
         if key == Keys.ENTER:
             self.value = int(not bool(self.value))
         return True
@@ -201,13 +201,13 @@ class Button(Base_UI):
     Multiline makes the "cursor" draw at every line if the text is multiline.\n
     Structure: [text]
     """
-    def __init__(self, text="", action:Callable|list[Callable|Any]|None=None, multiline=False, modify=False):
+    def __init__(self, text="", action:Callable|list[Callable|Any]|UI_list|None=None, multiline=False, modify=False):
         super().__init__(-1, text, "", False, "", multiline)
         self.action = action
         self.modify = bool(modify)
     
     
-    def _handle_action(self, key:Keys, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None):
+    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
         if key == Keys.ENTER:
             # list
             if type(self.action) is list and len(self.action) >= 2:
@@ -240,7 +240,7 @@ class Button(Base_UI):
             else:
                 # display function or lazy back button
                 if isinstance(self.action, UI_list):
-                    self.action.display(key_mapping=key_mapping)
+                    self.action.display(keybinds=keybinds)
                 else:
                     # print("Option is not a UI_list object!")
                     pass
@@ -249,7 +249,7 @@ class Button(Base_UI):
             return True
 
 
-def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
+def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, keybinds:Keybinds|None=None, allow_buffered_inputs=False):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
@@ -312,10 +312,10 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
             key = Keys.ENTER
             selected_e = elements[selected]
             if isinstance(selected_e, (Toggle, Button, UI_list)):
-                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
+                key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
             else:
                 while key == Keys.ENTER:
-                    key = get_key(Get_key_modes.NO_IGNORE, key_mapping, allow_buffered_inputs)
+                    key = get_key_with_obj(Get_key_modes.NO_IGNORE, keybinds, allow_buffered_inputs)
                     if key == Keys.ENTER and no_enter:
                         key = Keys.ESCAPE
             # move selection
@@ -333,9 +333,9 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
                         break
             # change value Base_UI
             elif isinstance(selected_e, Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
-                actual_move = bool(selected_e._handle_action(key, key_mapping))
+                actual_move = bool(selected_e._handle_action(key, keybinds))
             # change value UI_list
             elif isinstance(selected_e, UI_list) and key == Keys.ENTER:
-                action = selected_e._handle_action(0, key_mapping)
+                action = selected_e._handle_action(0, keybinds)
                 if action is not None:
                     return action

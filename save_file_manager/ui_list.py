@@ -1,7 +1,7 @@
 from save_file_manager.cursor import Cursor_icon
-from save_file_manager.utils import get_key, Get_key_modes, Keys
+from save_file_manager.utils import Get_key_modes, Keys, get_key_with_obj, Keybinds
 # from cursor import Cursor_icon
-# from utils import get_key, Get_key_modes, Keys
+# from utils import Get_key_modes, Keys, get_key_with_obj, Keybinds
 
 from typing import Any
 
@@ -88,14 +88,15 @@ class UI_list:
         return selected
 
     
-    def _handle_action(self, selected:int, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None) -> (int|Any):
+    def _handle_action(self, selected:int, keybinds:Keybinds|None=None) -> (int|Any):
         """Handles what to return for the selected answer."""
         if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
+            selected_action = self.action_list[selected]
             # list
-            if type(self.action_list[selected]) is list and len(self.action_list[selected]) >= 2:
+            if type(selected_action) is list and len(selected_action) >= 2:
                 lis = []
                 di = dict()
-                for elem in self.action_list[selected]:
+                for elem in selected_action:
                     if type(elem) is dict:
                         di.update(elem)
                     else:
@@ -110,24 +111,22 @@ class UI_list:
                     func_return[0] = selected
                     return func_return
             # normal function
-            elif callable(self.action_list[selected]):
+            elif callable(selected_action):
                 if self.modify_list:
-                    func_return = self.action_list[selected]([self.answer_list, self.action_list])
+                    func_return = selected_action([self.answer_list, self.action_list])
                 else:
-                    func_return = self.action_list[selected]()
+                    func_return = selected_action()
                 if func_return == -1:
                     return selected
                 elif type(func_return) is list and func_return[0] == -1:
                     func_return[0] = selected
                     return func_return
             # ui
+            elif isinstance(selected_action, UI_list):
+                selected_action.display(keybinds=keybinds)
             else:
-                # display function or lazy back button
-                try:
-                    self.action_list[selected].display(key_mapping=key_mapping)
-                except AttributeError:
-                    # print("Option is not a UI_list object!")
-                    return selected
+                # print("Option is not a UI_list object!")
+                return selected
         else:
             return selected
         
@@ -143,7 +142,7 @@ class UI_list:
         return selected
     
 
-    def display(self, key_mapping:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
+    def display(self, keybinds:Keybinds|None=None, allow_buffered_inputs=False):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -171,15 +170,15 @@ class UI_list:
                 txt += self._make_text(selected)
                 print(txt)
                 # answer select
-                key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
+                key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
                 if self.can_esc and key == Keys.ESCAPE:
                     return -1
                 while key == Keys.ESCAPE:
-                    key = get_key(Get_key_modes.IGNORE_HORIZONTAL, key_mapping, allow_buffered_inputs)
+                    key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
                 selected = self._move_selection(key, selected)
             # menu actions
             selected = self._convert_selected(selected)
-            action = self._handle_action(selected, key_mapping)
+            action = self._handle_action(selected, keybinds)
             if action is not None:
                 return action
 
