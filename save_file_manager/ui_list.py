@@ -71,11 +71,11 @@ class UI_list:
         return selected
     
     
-    def _move_selection(self, key:Keys, selected:int):
+    def _move_selection(self, selected:int, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any]):
         """Moves the selection depending on the input, in a way, where the selection can't land on an empty line."""
-        if key != Keys.ENTER:
+        if key != result_list[Keys.ENTER.value]:
             while True:
-                if key == Keys.DOWN:
+                if key == result_list[Keys.DOWN.value]:
                     selected += 1
                     if selected > len(self.answer_list) - 1:
                         selected = 0
@@ -88,7 +88,7 @@ class UI_list:
         return selected
 
     
-    def _handle_action(self, selected:int, keybinds:Keybinds|None=None) -> (int|Any):
+    def _handle_action(self, selected:int, keybinds:Keybinds|None=None, allow_buffered_inputs=False, result_list:tuple[Any, Any, Any, Any, Any, Any]|None=None) -> (int|Any):
         """Handles what to return for the selected answer."""
         if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
             selected_action = self.action_list[selected]
@@ -123,7 +123,7 @@ class UI_list:
                     return func_return
             # ui
             elif isinstance(selected_action, UI_list):
-                selected_action.display(keybinds=keybinds)
+                selected_action.display(keybinds, allow_buffered_inputs, result_list)
             else:
                 # print("Option is not a UI_list object!")
                 return selected
@@ -142,7 +142,7 @@ class UI_list:
         return selected
     
 
-    def display(self, keybinds:Keybinds|None=None, allow_buffered_inputs=False):
+    def display(self, keybinds:Keybinds|None=None, allow_buffered_inputs=False, result_list:tuple[Any, Any, Any, Any, Any, Any]|None=None):
         """
         Prints the `question` and then the list of answers from the `answer_list` that the user can cycle between with the arrow keys and select with enter.\n
         Gives back a number from 0-n acording to the size of the list that was passed in.\n
@@ -156,7 +156,15 @@ class UI_list:
         - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
         - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
         If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
+        If `result_list` is not None, it will use the values in that list to match with the return value of the `get_key_with_obj()`.\n
+        The order of the elements in the tuple should be:\n
+        \t(escape, up, down, left, right, enter)\n
+        If it is None, the default value is:\n
+        \t`(Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)`
         """
+        if result_list is None:
+            result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
+        
         selected = self._setup_selected(0)
         while True:
             selected = self._setup_selected(selected)
@@ -175,10 +183,10 @@ class UI_list:
                     return -1
                 while key == Keys.ESCAPE:
                     key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
-                selected = self._move_selection(key, selected)
+                selected = self._move_selection(selected, key, result_list)
             # menu actions
             selected = self._convert_selected(selected)
-            action = self._handle_action(selected, keybinds)
+            action = self._handle_action(selected, keybinds, allow_buffered_inputs, result_list)
             if action is not None:
                 return action
 

@@ -20,12 +20,12 @@ class Get_key_modes(Enum):
 
 
 class Keys(Enum):
-    ESCAPE = auto()
-    UP = auto()
-    DOWN = auto()
-    LEFT = auto()
-    RIGHT = auto()
-    ENTER = auto()
+    ESCAPE = 0
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
+    ENTER = 5
 
 
 def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):

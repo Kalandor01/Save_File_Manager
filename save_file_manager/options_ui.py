@@ -83,7 +83,7 @@ class Base_UI:
         return str(self.value)
     
     
-    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
+    def _handle_action(self, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any], keybinds:Keybinds|None=None):
         """
         Handles what to return for the input key.\n
         Returns False if the screen should not update.
@@ -118,8 +118,8 @@ class Slider(Base_UI):
         return txt
     
     
-    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
-        if key == Keys.RIGHT:
+    def _handle_action(self, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any], keybinds:Keybinds|None=None):
+        if key == result_list[Keys.RIGHT.value]:
             if self.value + self.value_range.step <= self.value_range.stop:
                 self.value += self.value_range.step
             else:
@@ -157,10 +157,10 @@ class Choice(Base_UI):
         return f"{self.value + 1}/{len(self.choice_list)}"
     
     
-    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
-        if key == Keys.RIGHT:
+    def _handle_action(self, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any], keybinds:Keybinds|None=None):
+        if key == result_list[Keys.RIGHT.value]:
             self.value += 1
-        elif key == Keys.LEFT:
+        elif key == result_list[Keys.LEFT.value]:
             self.value -= 1
         self.value = self.value % len(self.choice_list)
         return True
@@ -184,8 +184,8 @@ class Toggle(Base_UI):
         return (self.symbol_off if self.value == 0 else self.symbol)
     
     
-    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
-        if key == Keys.ENTER:
+    def _handle_action(self, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any], keybinds:Keybinds|None=None):
+        if key == result_list[Keys.ENTER.value]:
             self.value = int(not bool(self.value))
         return True
 
@@ -207,8 +207,8 @@ class Button(Base_UI):
         self.modify = bool(modify)
     
     
-    def _handle_action(self, key:Keys, keybinds:Keybinds|None=None):
-        if key == Keys.ENTER:
+    def _handle_action(self, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any], keybinds:Keybinds|None=None):
+        if key == result_list[Keys.ENTER.value]:
             # list
             if type(self.action) is list and len(self.action) >= 2:
                 lis = []
@@ -240,7 +240,7 @@ class Button(Base_UI):
             else:
                 # display function or lazy back button
                 if isinstance(self.action, UI_list):
-                    self.action.display(keybinds=keybinds)
+                    self.action.display(keybinds=keybinds, result_list=result_list)
                 else:
                     # print("Option is not a UI_list object!")
                     pass
@@ -249,15 +249,23 @@ class Button(Base_UI):
             return True
 
 
-def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, keybinds:Keybinds|None=None, allow_buffered_inputs=False):
+def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:Cursor_icon|None=None, keybinds:Keybinds|None=None, allow_buffered_inputs=False, result_list:tuple[Any, Any, Any, Any, Any, Any]|None=None):
     """
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
     if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.\n
     If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
+    If `result_list` is not None, it will use the values in that list to match with the return value of the `get_key_with_obj()`.\n
+    The order of the elements in the tuple should be:\n
+    \t(escape, up, down, left, right, enter)\n
+    If it is None, the default value is:\n
+    \t`(Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)`
     """
+    if result_list is None:
+        result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
     if cursor_icon is None:
         cursor_icon = Cursor_icon()
+    
     # is enter needed?
     no_enter = True
     for element in elements:
@@ -272,7 +280,7 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
             raise UINoSelectablesError("No selectable element in the elements list.")
     # render/getkey loop
     key = None
-    while key != Keys.ESCAPE:
+    while key != result_list[Keys.ESCAPE.value]:
         # render
         # clear screen
         txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -309,19 +317,19 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
             # to prevent useless screen re-render at slider
             actual_move = True
             # get key
-            key = Keys.ENTER
+            key = result_list[Keys.ENTER.value]
             selected_e = elements[selected]
             if isinstance(selected_e, (Toggle, Button, UI_list)):
                 key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
             else:
-                while key == Keys.ENTER:
+                while key == result_list[Keys.ENTER.value]:
                     key = get_key_with_obj(Get_key_modes.NO_IGNORE, keybinds, allow_buffered_inputs)
-                    if key == Keys.ENTER and no_enter:
-                        key = Keys.ESCAPE
+                    if key == result_list[Keys.ENTER.value] and no_enter:
+                        key = result_list[Keys.ESCAPE.value]
             # move selection
-            if key == Keys.UP or key == Keys.DOWN:
+            if key == result_list[Keys.UP.value] or key == result_list[Keys.DOWN.value]:
                 while True:
-                    if key == Keys.DOWN:
+                    if key == result_list[Keys.DOWN.value]:
                         selected += 1
                         if selected > len(elements) - 1:
                             selected = 0
@@ -332,10 +340,10 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
                     if isinstance(elements[selected], (Base_UI, UI_list)):
                         break
             # change value Base_UI
-            elif isinstance(selected_e, Base_UI) and (key in [Keys.LEFT, Keys.RIGHT, Keys.ENTER]):
-                actual_move = bool(selected_e._handle_action(key, keybinds))
+            elif isinstance(selected_e, Base_UI) and (key in [result_list[Keys.LEFT.value], result_list[Keys.RIGHT.value], result_list[Keys.ENTER.value]]):
+                actual_move = bool(selected_e._handle_action(key, result_list, keybinds,))
             # change value UI_list
-            elif isinstance(selected_e, UI_list) and key == Keys.ENTER:
-                action = selected_e._handle_action(0, keybinds)
+            elif isinstance(selected_e, UI_list) and key == result_list[Keys.ENTER.value]:
+                action = selected_e._handle_action(0, keybinds, allow_buffered_inputs, result_list)
                 if action is not None:
                     return action
