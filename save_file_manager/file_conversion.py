@@ -1,5 +1,5 @@
 
-def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", version=2):
+def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", save_ext="sav", encoding="utf-8", version=2):
     """
     Creates a file that has been encoded, from a string or a list of strings.\n
     If `save_name` contains a "*", when creating the file, it will be replaced in the name by the `save_num`.\n
@@ -16,12 +16,7 @@ def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", sa
     def encode_line(line, r:npr.RandomState):
         encode_64 = r.randint(2, 5)
         # encoding into bytes
-        line_enc = b""
-        for line_char in str(line):
-            try:
-                line_enc += str(line_char).encode(encoding)
-            except UnicodeEncodeError:
-                line_enc += b"\x3f"
+        line_enc = str(line).encode(encoding, "replace")
         # encode to base64 x times
         for _ in range(encode_64):
             line_enc = b64encode(line_enc)
@@ -79,7 +74,7 @@ def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", sa
                 f.write(bytes(encoded_line))
 
 
-def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="windows-1250", decode_until=-1):
+def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="utf-8", decode_until=-1):
     """
     Returns a list of strings, decoded fron the encoded file.\n
     If `save_name` contains a "*", when opening the file, it will be replaced in the name by the `save_num`.\n

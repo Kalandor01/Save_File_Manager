@@ -2,7 +2,7 @@
 This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
-__version__ = "1.15.1"
+__version__ = "1.15.2"
 
 
 if __name__ == "__main__":
@@ -34,12 +34,11 @@ else:
 # super edge case
 # test_save = ["éá山ā人é口ŏ刀ā木ù日ì月è日女ǚ子ĭ馬马ǎ鳥鸟ǎ目ù水ǐǐì指事īī一ī二è三ā大à人天ā大小ǎ上à下à本ě木末"]
 # encode_save(test_save, 1, version=3)
+# print(test_save)
 # print()
-# decoded = decode_save()
-# for d_line in decoded:
-#     print(d_line)
-# print()
-# print(decode_save())
+# decoded_save = decode_save()
+# print(decoded_save)
+# print(test_save == decoded_save)
 
 
 # def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
