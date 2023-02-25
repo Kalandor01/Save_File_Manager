@@ -61,9 +61,9 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
             if is_file_encoded:
                 try:
                     if save_name is not None:
-                        data = decode_save(int(file), path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until=decode_until)
+                        data = decode_save(int(file), path.join(dir_name, save_name.replace("*", str(file))), save_ext, decode_until)
                     elif save_num is not None:
-                        data = decode_save(save_num, path.join(dir_name, file.replace("." + save_ext, "")), save_ext, decode_until=decode_until)
+                        data = decode_save(save_num, path.join(dir_name, file.replace("." + save_ext, "")), save_ext, decode_until)
                 except ValueError:
                     data = -1
             else:

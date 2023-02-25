@@ -1,5 +1,5 @@
 
-def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", save_ext="sav", encoding="utf-8", version=2):
+def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", save_ext="sav", version=2, encoding="utf-8"):
     """
     Creates a file that has been encoded, from a string or a list of strings.\n
     If `save_name` contains a "*", when creating the file, it will be replaced in the name by the `save_num`.\n
@@ -7,7 +7,8 @@ def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", sa
     - 1: normal: weak
     - 2: secure: stronger
     - 3: super-secure: strogest (only works, if opened on the same location, with the same name)
-    - 4: stupid secure: v3 but encription "expires" on the next day
+    - 4: stupid secure: v3 but encription "expires" on the next day\n
+    You shouldn't need to change the `encoding`, but it stays there for legacy reasons.
     """
     from math import pi, sqrt
     from base64 import b64encode
@@ -74,11 +75,12 @@ def encode_save(save_file_lines:list[str]|str, save_num=1, save_name="save*", sa
                 f.write(bytes(encoded_line))
 
 
-def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="utf-8", decode_until=-1):
+def decode_save(save_num=1, save_name="save*", save_ext="sav", decode_until=-1, encoding="utf-8"):
     """
     Returns a list of strings, decoded fron the encoded file.\n
     If `save_name` contains a "*", when opening the file, it will be replaced in the name by the `save_num`.\n
-    `decode_until` controlls how many lines the function should decode (strarting from the beggining, with 1).
+    `decode_until` controlls how many lines the function should decode (strarting from the beggining, with 1).\n
+    You shouldn't need to change the `encoding`, but it stays there for legacy reasons.
     """
     from math import pi, sqrt
     from base64 import b64decode
@@ -104,7 +106,7 @@ def decode_save(save_num=1, save_name="save*", save_ext="sav", encoding="utf-8",
     # decode
     with open(f'{save_name.replace("*", str(save_num))}.{save_ext}', "rb") as f:
         lines = f.readlines()
-    lis = []
+    lis:list[str] = []
     if version == 4:
         from datetime import datetime
         n = datetime.now()
