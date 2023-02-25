@@ -3,7 +3,7 @@ from enum import Enum, auto
 from typing import Any
 
 try:
-    from msvcrt import getch, kbhit
+    from msvcrt import kbhit, getwch
 except ModuleNotFoundError:
     raise ModuleNotFoundError("msvcrt module not found!\nThis module is windows only!")
 
@@ -28,7 +28,7 @@ class Keys(Enum):
     ENTER = 5
 
 
-def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[bytes]]], list[bytes]]|None=None, allow_buffered_inputs=False):
+def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[list[str]]], list[str]]|None=None, allow_buffered_inputs=False):
     """
     Function for detecting a keypress (mainly arrow keys)\n
     Returns a value from the `Key` enum depending on the key type.\n
@@ -42,10 +42,10 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[
     You can set custom keys keybinds by providing a key_map:\n
     [[a list for each value in the `Key` enum, with each list having 2 lists of keys (the 1. list containing the keys that aren't arrow keys, the 2. containing the ones that are)], [double (arrow) key 1. halfs]]\n
     Examles:\n
-    \tdefault: ([[[b"\\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\\r"]]], [b"\\xe0", b"\\x00"])
-    \tarrow/WASD: ([[[b"\\x1b", b"e"]], [[b"w"], [b"H"]], [[b"s"], [b"P"]], [[b"a"], [b"K"]], [[b"d"], [b"M"]], [[b"\\r", b" "]]], [b"\\xe0", b"\\x00"])
-    \tonly W, A, and D without setting the mode: ([[], [[b"w"]], [], [[b"a"]], [[b"d"]], []])
-    \tunintended/compressed: ([[b"\\x1b"], [[], b"H"], [[], b"P"], [[], b"K"], [[], b"M"], [b"\\r"]], b"\\xe0\\x00")
+    \tdefault: ([[["\\x1b"]], [[], ["H"]], [[], ["P"]], [[], ["K"]], [[], ["M"]], [["\\r"]]], ["\\xe0", "\\x00"])
+    \tarrow/WASD: ([[["\\x1b", "e"]], [["w"], ["H"]], [["s"], ["P"]], [["a"], ["K"]], [["d"], ["M"]], [["\\r", " "]]], ["\\xe0", "\\x00"])
+    \tonly W, A, and D without setting the mode: ([[], [["w"]], [], [["a"]], [["d"]], []])
+    \tunintended/compressed: ([["\\x1b"], [[], "H"], [[], "P"], [[], "K"], [[], "M"], ["\\r"]], "\\xe0\\x00")
     """
     
     ignore_list = [Get_key_modes.IGNORE_ESCAPE, Get_key_modes.IGNORE_VERTICAL, Get_key_modes.IGNORE_VERTICAL,
@@ -54,18 +54,18 @@ def get_key(mode:Get_key_modes=Get_key_modes.NO_IGNORE, key_map:tuple[list[list[
     
     if not allow_buffered_inputs:
         while kbhit():
-            getch()
+            getwch()
 
     arrow = False
     if key_map is None:
-        key_map = ([[[b"\x1b"]], [[], [b"H"]], [[], [b"P"]], [[], [b"K"]], [[], [b"M"]], [[b"\r"]]], [b"\xe0", b"\x00"])
+        key_map = ([[["\x1b"]], [[], ["H"]], [[], ["P"]], [[], ["K"]], [[], ["M"]], [["\r"]]], ["\xe0", "\x00"])
     while True:
-        key = getch()
+        key = getwch()
         # print(key)
         arrow = False
         if len(key_map) != 1 and len(key_map) > 1 and key in key_map[1]:
             arrow = True
-            key = getch()
+            key = getwch()
             # print("arrow", key)
         
         for x, response in enumerate(response_list):
@@ -88,7 +88,7 @@ class Key_action:
     If a normal list is passed in, it will act as the ignore mode list for both normal and arrow keys. (IGNORE_ARROWS and ONLY_ARROWS is added automatically)\n
     Raises `ValueError` if both `normal_keys` and `arrow_keys` are empty lists.
     """
-    def __init__(self, response:Any, normal_keys:list[bytes]|None=None, arrow_keys:list[bytes]|None=None, ignore_modes:list[Get_key_modes]|tuple[list[Get_key_modes], list[Get_key_modes]]|None=None):
+    def __init__(self, response:Any, normal_keys:list[str]|None=None, arrow_keys:list[str]|None=None, ignore_modes:list[Get_key_modes]|tuple[list[Get_key_modes], list[Get_key_modes]]|None=None):
         if normal_keys is None:
             normal_keys = []
         if arrow_keys is None:
@@ -115,7 +115,7 @@ class Keybinds:
     Object for `get_key_with_obj()`.\n
     Raises `ValueError` if `actions` is an empty list.
     """
-    def __init__(self, actions:list[Key_action], arrow_key_modifiers:list[bytes]|None=None):
+    def __init__(self, actions:list[Key_action], arrow_key_modifiers:list[str]|None=None):
         if len(actions) == 0:
             raise ValueError("actions can't be an empty list.")
         self._actions = actions
@@ -139,26 +139,26 @@ def get_key_with_obj(mode:Get_key_modes|list[Get_key_modes]=Get_key_modes.NO_IGN
 
     if keybinds is None:
         keybinds = Keybinds([
-            Key_action(Keys.ESCAPE, [b"\x1b"], [], [Get_key_modes.IGNORE_ESCAPE]),
-            Key_action(Keys.UP, [], [b"H"], [Get_key_modes.IGNORE_VERTICAL]),
-            Key_action(Keys.DOWN, [], [b"P"], [Get_key_modes.IGNORE_VERTICAL]),
-            Key_action(Keys.LEFT, [], [b"K"], [Get_key_modes.IGNORE_HORIZONTAL]),
-            Key_action(Keys.RIGHT, [], [b"M"], [Get_key_modes.IGNORE_HORIZONTAL]),
-            Key_action(Keys.ENTER, [b"\r"], [], [Get_key_modes.IGNORE_ENTER]),
-        ], [b"\xe0", b"\x00"])
+            Key_action(Keys.ESCAPE, ["\x1b"], [], [Get_key_modes.IGNORE_ESCAPE]),
+            Key_action(Keys.UP, [], ["H"], [Get_key_modes.IGNORE_VERTICAL]),
+            Key_action(Keys.DOWN, [], ["P"], [Get_key_modes.IGNORE_VERTICAL]),
+            Key_action(Keys.LEFT, [], ["K"], [Get_key_modes.IGNORE_HORIZONTAL]),
+            Key_action(Keys.RIGHT, [], ["M"], [Get_key_modes.IGNORE_HORIZONTAL]),
+            Key_action(Keys.ENTER, ["\r"], [], [Get_key_modes.IGNORE_ENTER]),
+        ], ["\xe0", "\x00"])
         
 
     if not allow_buffered_inputs:
         while kbhit():
-            getch()
+            getwch()
 
     arrow = False
     while True:
-        key = getch()
+        key = getwch()
         arrow = False
         if key in keybinds._arrow_key_modifiers:
             arrow = True
-            key = getch()
+            key = getwch()
         
         for action in keybinds._actions:
             ignore = False

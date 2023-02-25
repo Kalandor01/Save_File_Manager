@@ -2,7 +2,7 @@
 This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
-__version__ = "1.15.2.1"
+__version__ = "1.15.3"
 
 
 if __name__ == "__main__":
@@ -158,14 +158,14 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 # elements.append(Button("hmmm", UI_list_s(["hm", "l"], "kk", can_esc=True)))
 
 # acts = [
-#     Key_action("quit", [b"q"], [], [Get_key_modes.IGNORE_ESCAPE]),
-#     Key_action("^", [b"w"], [], [Get_key_modes.IGNORE_VERTICAL]),
-#     Key_action("V", [b"s"], [], [Get_key_modes.IGNORE_VERTICAL]),
-#     Key_action("<", [b"a"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
-#     Key_action("right lol", [b"d"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
-#     Key_action("E", [b"e"], [], [Get_key_modes.IGNORE_ENTER]),
+#     Key_action("quit", ["q"], [], [Get_key_modes.IGNORE_ESCAPE]),
+#     Key_action("^", ["w"], [], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action("V", ["s"], [], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action("<", ["a"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action("right lol", ["d"], [], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action("E", ["e"], [], [Get_key_modes.IGNORE_ENTER]),
 # ]
-# kb = Keybinds(acts, [b"\xe0", b"\x00"])
+# kb = Keybinds(acts, ["\xe0", "\x00"])
 # result_list = ("quit", "^", "V", "<", "right lol", "E")
 
 # print(options_ui(elements, "test", Cursor_icon(">", "<"), kb, False, result_list))
@@ -176,12 +176,12 @@ def _test_run(new_method=True, max_saves=5, save_name="save*", save_ext="sav", i
 
 
 # acts = [
-#     Key_action(Keys.ESCAPE, [b"\x1b"], [], [Get_key_modes.IGNORE_ESCAPE]),
-#     Key_action(Keys.UP, [], [b"H"], [Get_key_modes.IGNORE_VERTICAL]),
-#     Key_action(Keys.DOWN, [], [b"P"], [Get_key_modes.IGNORE_VERTICAL]),
-#     Key_action(Keys.LEFT, [], [b"K"], [Get_key_modes.IGNORE_HORIZONTAL]),
-#     Key_action(Keys.RIGHT, [], [b"M"], [Get_key_modes.IGNORE_HORIZONTAL]),
-#     Key_action(Keys.ENTER, [b"\r"], [], [Get_key_modes.IGNORE_ENTER]),
+#     Key_action(Keys.ESCAPE, ["\x1b"], [], [Get_key_modes.IGNORE_ESCAPE]),
+#     Key_action(Keys.UP, [], ["H"], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.DOWN, [], ["P"], [Get_key_modes.IGNORE_VERTICAL]),
+#     Key_action(Keys.LEFT, [], ["K"], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.RIGHT, [], ["M"], [Get_key_modes.IGNORE_HORIZONTAL]),
+#     Key_action(Keys.ENTER, ["\r"], [], [Get_key_modes.IGNORE_ENTER]),
 # ]
-# kb = Keybinds(acts, [b"\xe0", b"\x00"])
+# kb = Keybinds(acts, ["\xe0", "\x00"])
 # while True: print(get_key_with_obj([Get_key_modes.IGNORE_HORIZONTAL, Get_key_modes.IGNORE_ESCAPE], kb))
