@@ -4,7 +4,7 @@ from save_file_manager.file_conversion import decode_save
 
 
 class FileReaderArgsError(Exception):
-    """This exeption is raired if "save_name" and "save_num" are both None in file_reader"""
+    """This exeption is raised if "save_name" and "save_num" are both None in file_reader"""
     pass
 
 
