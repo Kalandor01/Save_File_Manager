@@ -37,7 +37,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                     reg += "(\\d+)"
             reg += "$"
         else:
-            reg = escape(f"^{save_name}.{save_ext}$")
+            reg = "^" + escape(f"{save_name}.{save_ext}") + "$"
     # get existing file numbers
     file_names = listdir(dir_name)
     existing_files:list[str] = []
