@@ -6,7 +6,10 @@ from save_file_manager.file_conversion import decode_save
 
 
 class FileReaderArgsError(Exception):
-    """This exeption is raised if "save_name" and "save_num" are both None in file_reader"""
+    """
+    This exeption is raised if `save_name` and `save_num` are both None in `file_reader`.\n
+    It is also thrown when `save_num` is None and `save_name` doesn't have a "*".
+    """
     pass
 
 
@@ -27,23 +30,22 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
     # setup vars
     reg = ""
     save_count = 0
-    if save_name is not None:
-        if save_name.find("*") != -1:
-            sname_split = f"{save_name}.{save_ext}".split("*")
-            reg = "^"
-            for x in range(len(sname_split)):
-                reg += escape(sname_split[x])
-                if x + 1 < len(sname_split):
-                    reg += "(\\d+)"
-            reg += "$"
-        else:
-            reg = "^" + escape(f"{save_name}.{save_ext}") + "$"
+    naming_pattern_search = False
+    if save_name is not None and save_name.find("*") != -1:
+        naming_pattern_search = True
+        sname_split = f"{save_name}.{save_ext}".split("*")
+        reg = "^"
+        for x in range(len(sname_split)):
+            reg += escape(sname_split[x])
+            if x + 1 < len(sname_split):
+                reg += "(\\d+)"
+        reg += "$"
     # get existing file numbers
     file_names = listdir(dir_name)
     existing_files:list[str] = []
     for name in file_names:
         # get files by naming pattern
-        if save_name is not None:
+        if naming_pattern_search:
             if path.isfile(path.join(dir_name, name)):
                 regex = search(reg, name)
                 if regex is not None:
@@ -61,7 +63,7 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
                         if save_count >= max_saves:
                             break
         else:
-            raise FileReaderArgsError('"save_name" and "save_num" can\'t both be None at the same time')
+            raise FileReaderArgsError('"save_name" and "save_num" can\'t both be None at the same time, and "save_name" must contain a "*"')
     existing_files.sort()
 
     # get file datas
@@ -101,7 +103,7 @@ def file_reader_s(save_name="save*", dir_name:str|None=None, decode_until=-1):
     return file_reader(max_saves=-1, save_name=save_name, save_ext="sav", dir_name=dir_name, is_file_encoded=True, decode_until=decode_until, save_num=None)
 
 
-def file_reader_blank(save_num, dir_name:str|None=None, decode_until=-1):
+def file_reader_blank(save_num:int, dir_name:str|None=None, decode_until=-1):
     """
     Short version of `file_reader`, but for save files with different names, but same `save_num`s.\n
     file_reader(max_saves=-1, save_name=None, save_ext="sav", dir_name, is_file_encoded=True, decode_until, save_num)
