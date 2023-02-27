@@ -1,4 +1,6 @@
 from typing import Literal
+from itertools import groupby
+from re import escape, search
 from save_file_manager.file_conversion import decode_save
 # from file_conversion import decode_save
 
@@ -23,24 +25,33 @@ def file_reader(max_saves=5, save_name:str|None="save*", save_ext="sav", dir_nam
         dir_name = getcwd()
 
     # setup vars
-    save_name_post = ""
+    reg = ""
     save_count = 0
     if save_name is not None:
         if save_name.find("*") != -1:
-            save_name_post = save_name.split("*")[-1] + "." + save_ext
+            sname_split = f"{save_name}.{save_ext}".split("*")
+            reg = "^"
+            for x in range(len(sname_split)):
+                reg += escape(sname_split[x])
+                if x + 1 < len(sname_split):
+                    reg += "(\\d+)"
+            reg += "$"
         else:
-            save_name_post = "." + save_ext
+            reg = escape(f"^{save_name}.{save_ext}$")
     # get existing file numbers
     file_names = listdir(dir_name)
     existing_files:list[str] = []
     for name in file_names:
         # get files by naming pattern
         if save_name is not None:
-            if path.isfile(path.join(dir_name, name)) and name.startswith(save_name.split("*")[0]) and name.endswith(save_name_post):
-                try: file_number = int(name.replace(f".{save_ext}", "").replace(save_name.replace("*", ""), ""))
-                except ValueError: continue
-                if file_number <= max_saves or max_saves < 0:
-                    existing_files.append(str(file_number))
+            if path.isfile(path.join(dir_name, name)):
+                regex = search(reg, name)
+                if regex is not None:
+                    group = groupby(regex.groups())
+                    if next(group, True) and not next(group, False):
+                        file_number = int(regex.group(1))
+                        if file_number <= max_saves or max_saves < 0:
+                            existing_files.append(str(file_number))
         # get files by extension only
         elif save_num is not None:
             if path.isfile(path.join(dir_name, name)) and name.endswith("." + save_ext):
