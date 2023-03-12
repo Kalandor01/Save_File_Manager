@@ -27,7 +27,7 @@ class UI_list:
             cursor_icon = Cursor_icon()
         answer_list = [(ans if ans is None else str(ans)) for ans in answer_list]
         self.answer_list = list(answer_list)
-        self.question = str(question)
+        self.question = None if question is None else str(question)
         self.cursor_icon = cursor_icon
         self.multiline = bool(multiline)
         self.can_esc = bool(can_esc)
@@ -73,16 +73,10 @@ class UI_list:
     
     def _move_selection(self, selected:int, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any]):
         """Moves the selection depending on the input, in a way, where the selection can't land on an empty line."""
+        move_number = 1 if key == result_list[Keys.DOWN.value] else -1
         if key != result_list[Keys.ENTER.value]:
             while True:
-                if key == result_list[Keys.DOWN.value]:
-                    selected += 1
-                    if selected > len(self.answer_list) - 1:
-                        selected = 0
-                else:
-                    selected -= 1
-                    if selected < 0:
-                        selected = len(self.answer_list) - 1
+                selected = (selected + move_number) % len(self.answer_list)
                 if self.answer_list[selected] is not None:
                     break
         return selected
