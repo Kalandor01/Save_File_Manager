@@ -19,10 +19,10 @@ class UI_list:
     - If the function returns -1 the `display` function will instantly exit.\n
     - If the function returns a list where the first element is -1 the `display` function will instantly return that list with the first element replaced by the selected element number of that `UI_list` object.\n
     - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
-    - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
+    - If `modify_UI_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get the `UI_list` as it's first argument (and can modify it) when the function is called.\n
     """
 
-    def __init__(self, answer_list:list[str|None], question:str|None=None, cursor_icon:Cursor_icon|None=None, multiline=False, can_esc=False, action_list:list|None=None, exclude_nones=False, modify_list=False):
+    def __init__(self, answer_list:list[str|None], question:str|None=None, cursor_icon:Cursor_icon|None=None, multiline=False, can_esc=False, action_list:list|None=None, exclude_nones=False, modify_UI_list=False):
         if cursor_icon is None:
             cursor_icon = Cursor_icon()
         answer_list = [(ans if ans is None else str(ans)) for ans in answer_list]
@@ -36,7 +36,7 @@ class UI_list:
         else:
             self.action_list = list(action_list)
         self.exclude_nones = exclude_nones
-        self.modify_list = bool(modify_list)
+        self.modify_UI_list = bool(modify_UI_list)
 
 
     def _make_text(self, selected:int, cursor_icon:Cursor_icon|None=None):
@@ -73,8 +73,8 @@ class UI_list:
     
     def _move_selection(self, selected:int, key:Any, result_list:tuple[Any, Any, Any, Any, Any, Any]):
         """Moves the selection depending on the input, in a way, where the selection can't land on an empty line."""
-        move_number = 1 if key == result_list[Keys.DOWN.value] else -1
         if key != result_list[Keys.ENTER.value]:
+            move_number = 1 if key == result_list[Keys.DOWN.value] else -1
             while True:
                 selected = (selected + move_number) % len(self.answer_list)
                 if self.answer_list[selected] is not None:
@@ -82,7 +82,7 @@ class UI_list:
         return selected
 
     
-    def _handle_action(self, selected:int, keybinds:Keybinds|None=None, allow_buffered_inputs=False, result_list:tuple[Any, Any, Any, Any, Any, Any]|None=None) -> (int|Any):
+    def _handle_action(self, selected:int, keybinds:Keybinds|None=None, allow_buffered_inputs=False, result_list:tuple[Any, Any, Any, Any, Any, Any]|None=None) -> (int|Any|None):
         """Handles what to return for the selected answer."""
         if self.action_list != [] and selected < len(self.action_list) and self.action_list[selected] is not None:
             selected_action = self.action_list[selected]
@@ -95,8 +95,8 @@ class UI_list:
                         di.update(elem)
                     else:
                         lis.append(elem)
-                if self.modify_list:
-                    func_return = lis[0]([self.answer_list, self.action_list], *lis[1:], **di)
+                if self.modify_UI_list:
+                    func_return = lis[0](self, *lis[1:], **di)
                 else:
                     func_return = lis[0](*lis[1:], **di)
                 if func_return == -1:
@@ -106,8 +106,8 @@ class UI_list:
                     return func_return
             # normal function
             elif callable(selected_action):
-                if self.modify_list:
-                    func_return = selected_action([self.answer_list, self.action_list])
+                if self.modify_UI_list:
+                    func_return = selected_action(self)
                 else:
                     func_return = selected_action()
                 if func_return == -1:
@@ -148,7 +148,7 @@ class UI_list:
         - If the function returns -1 the `display` function will instantly exit.\n
         - If the function returns a list where the first element is -1 the `display` function will instantly return that list with the first element replaced by the selected element number of that `UI_list` object.\n
         - If it is a `UI_list` object, the object's `display` function will be automaticly called, allowing for nested menus.\n
-        - If `modify_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get a list containing the `answer_list` and the `action_list` as it's first argument (and can modify it) when the function is called.\n
+        - If `modify_UI_list` is `True`, any function (that is not a `UI_list` object) that is in the `action_list` will get the `UI_list` as it's first argument (and can modify it) when the function is called.\n
         If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
         If `result_list` is not None, it will use the values in that list to match with the return value of the `get_key_with_obj()`.\n
         The order of the elements in the tuple should be:\n
@@ -162,8 +162,8 @@ class UI_list:
         selected = self._setup_selected(0)
         while True:
             selected = self._setup_selected(selected)
-            key = Keys.ESCAPE
-            while key != Keys.ENTER:
+            key = result_list[Keys.ESCAPE.value]
+            while key != result_list[Keys.ENTER.value]:
                 # render
                 # clear screen
                 txt = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -173,9 +173,9 @@ class UI_list:
                 print(txt)
                 # answer select
                 key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
-                if self.can_esc and key == Keys.ESCAPE:
+                if self.can_esc and key == result_list[Keys.ESCAPE.value]:
                     return -1
-                while key == Keys.ESCAPE:
+                while key == result_list[Keys.ESCAPE.value]:
                     key = get_key_with_obj(Get_key_modes.IGNORE_HORIZONTAL, keybinds, allow_buffered_inputs)
                 selected = self._move_selection(selected, key, result_list)
             # menu actions
@@ -188,7 +188,7 @@ class UI_list:
 class UI_list_s(UI_list):
     """
     Short version of `UI_list`.\n
-    __init__(answer_list, question, cursor_icon=None, multiline, can_esc, action_list=None, exclude_nones, modify_list=False)
+    __init__(answer_list, question, cursor_icon=None, multiline, can_esc, action_list=None, exclude_nones, modify_UI_list=False)
     """
     def __init__(self, answer_list:list[str|None], question:str|None=None, multiline=False, can_esc=False, exclude_nones=False):
         super().__init__(answer_list, question, None, multiline, can_esc, None, exclude_nones, False)

@@ -2,7 +2,7 @@
 This module provides a basic (save) file creation, loading and deletion interface, with (open source) secure encoding.\n
 It also has ojects/functions for displaying basic UI elements, like sliders, (toggle)buttons, and choice lists.
 """
-__version__ = "1.16.3"
+__version__ = "1.16.4"
 
 
 if __name__ == "__main__":
@@ -44,12 +44,12 @@ else:
 # def over(a=5, b=1, c="def c", d="def d", e="def e", f="def f", g="def g"):
 #     input(f"{a}, {b}, {c}, {d}, {e}, {f}")
 
-# def mod(li:list[list]):
-#     print(li)
-#     if len(li[0]) == len(li[1]):
-#         li[1].pop(-1)
-#     li[0].pop(-1)
-#     if len(li[0]) == 0:
+# def mod(uil:UI_list):
+#     print(uil.answer_list, uil.action_list)
+#     if len(uil.answer_list) == len(uil.action_list):
+#         uil.action_list.pop(-1)
+#     uil.answer_list.pop(-1)
+#     if len(uil.answer_list) == 0:
 #         return -1
 
 
@@ -59,7 +59,7 @@ else:
 # l2_2 = UI_list(["option 1", "option 2", "back"], "l2_2", can_esc=True, action_list=[imput, imput, 0])
 # l1_0 = UI_list(["option 1", "option 2", "l2_2", "back"], "l1_0", can_esc=True, action_list=[imput, imput, l2_2, 0])
 # l1_1 = UI_list(["option 1", "option 2", "l2_1", "l2_0", "back"], "l1_1", can_esc=True, action_list=[imput, imput, l2_1, l2_0, None])
-# l0 = UI_list(["function", "l1_0", "\nl1_1", "\nExit", "function", "l1_0\n", "l1_1", "Exit", "function", "l1_0", "l1_1", "Exit"], "Main menu", multiline=False, action_list=[mod, l1_0, l1_1, None], modify_list=True)
+# l0 = UI_list(["function", "l1_0", "\nl1_1", "\nExit", "function", "l1_0\n", "l1_1", "Exit", "function", "l1_0", "l1_1", "Exit"], "Main menu", multiline=False, action_list=[mod, l1_0, l1_1, None], modify_UI_list=True)
 
 # l0.display()
 
