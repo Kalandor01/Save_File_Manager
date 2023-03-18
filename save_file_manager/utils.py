@@ -122,6 +122,16 @@ class Keybinds:
         if arrow_key_modifiers is None:
             arrow_key_modifiers = []
         self._arrow_key_modifiers = list(arrow_key_modifiers)
+    
+    
+    def get_result_list(self):
+        """
+        Returns the `result_list` for `UI_list` or `options_ui` functions.
+        """
+        result_list:list[Any] = []
+        for action in self._actions:
+            result_list.append(action.response)
+        return tuple(result_list)
 
 
 

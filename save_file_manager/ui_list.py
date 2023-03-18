@@ -157,7 +157,10 @@ class UI_list:
         \t`(Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)`
         """
         if result_list is None:
-            result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
+            if keybinds is None:
+                result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
+            else:
+                result_list = keybinds.get_result_list()
         
         selected = self._setup_selected(0)
         while True:

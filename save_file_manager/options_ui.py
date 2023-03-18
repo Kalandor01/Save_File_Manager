@@ -262,7 +262,10 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
     \t`(Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)`
     """
     if result_list is None:
-        result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
+        if keybinds is None:
+            result_list = (Keys.ESCAPE, Keys.UP, Keys.DOWN, Keys.LEFT, Keys.RIGHT, Keys.ENTER)
+        else:
+            result_list = keybinds.get_result_list()
     if cursor_icon is None:
         cursor_icon = Cursor_icon()
     
