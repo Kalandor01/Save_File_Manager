@@ -254,7 +254,7 @@ def options_ui(elements:list[Base_UI|UI_list], title:str|None=None, cursor_icon:
     Prints the title and then a list of elements that the user can cycle between with the up and down arrows, and adjust with either the left and right arrow keys or the enter key depending on the input object type, and exit with Escape.\n
     Accepts mainly a list of objects (Slider, Choice, Toggle (and UI_list)).\n
     if an element in the list is not one of these objects, the value will be printed, (or if it's None, the line will be blank) and cannot be selected.\n
-    If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.
+    If `allow_buffered_inputs` is `False`, if the user pressed some buttons before this function was called the function will not register those button presses.\n
     If `result_list` is not None, it will use the values in that list to match with the return value of the `get_key_with_obj()`.\n
     The order of the elements in the tuple should be:\n
     \t(escape, up, down, left, right, enter)\n
